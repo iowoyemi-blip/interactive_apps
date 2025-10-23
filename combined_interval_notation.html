@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inequality Practice (Simple & Compound)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .feedback-correct {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .feedback-incorrect {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        /* Custom styles for selected buttons */
+        .btn-selected {
+            background-color: #4f46e5 !important; /* A strong indigo for selected state */
+            color: white !important;
+            border-color: #4f46e5 !important;
+        }
+        .streak-pop {
+            animation: pop 0.3s ease-out;
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8 m-4 relative">
+        
+        <header class="text-center mb-6">
+             <div id="streak-container" class="absolute top-4 right-4 text-center">
+                 <span class="text-sm font-semibold text-white bg-green-500 rounded-full px-3 py-1 shadow-md">Streak: <span id="streak-count">0</span></span>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800">Inequality Practice</h1>
+            <p class="text-gray-600 mt-1">Graph the inequality and write it in interval notation.</p>
+        </header>
+
+        <div class="bg-indigo-600 text-white rounded-lg p-4 mb-6 text-center shadow-md">
+            <p class="text-2xl font-mono" id="inequality-problem"></p>
+        </div>
+
+        <div class="mb-6">
+            <canvas id="number-line-canvas" class="w-full h-24 cursor-pointer rounded-md bg-gray-50 border border-gray-200"></canvas>
+        </div>
+        
+        <div class="mb-6">
+            <div id="simple-controls" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">1. Endpoint Type</h3>
+                    <div class="flex space-x-2">
+                       <button id="open-circle-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Open Circle ( )</button>
+                       <button id="closed-circle-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Closed Circle [ ]</button>
+                    </div>
+                </div>
+                 <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">2. Shading Direction</h3>
+                    <div class="flex space-x-2">
+                       <button id="shade-left-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Shade Left (&lt;)</button>
+                       <button id="shade-right-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Shade Right (&gt;)</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="compound-controls" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">1. Left Endpoint</h3>
+                    <div class="flex space-x-2">
+                       <button id="left-open-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Open ( )</button>
+                       <button id="left-closed-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Closed [ ]</button>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">2. Right Endpoint</h3>
+                    <div class="flex space-x-2">
+                       <button id="right-open-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Open ( )</button>
+                       <button id="right-closed-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Closed [ ]</button>
+                    </div>
+                </div>
+                 <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">3. Shading</h3>
+                    <div class="flex space-x-2">
+                       <button id="shade-between-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Between</button>
+                       <button id="shade-outwards-btn" class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Outwards</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Write the Interval</h3>
+            <label for="interval-notation" class="sr-only">Interval Notation:</label>
+            <input type="text" id="interval-notation" class="w-full max-w-md mx-auto p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg text-center block" placeholder="e.g., (-5, 1] or (-Inf, 0) U (5, Inf)">
+            <p class="text-xs text-gray-500 mt-2 text-center">Use "U" for union and "Infinity" or "Inf" for infinity.</p>
+        </div>
+
+        <div class="mt-8">
+            <div id="feedback" class="h-8 mb-4 text-center text-xl font-semibold"></div>
+            <div class="flex justify-center space-x-4">
+                <button id="check-btn" class="bg-indigo-500 text-white font-bold py-2 px-8 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Check Answer</button>
+                <button id="next-btn" class="bg-gray-700 text-white font-bold py-2 px-8 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-transform transform hover:scale-105" style="display: none;">Next Question</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Global Elements ---
+        const canvas = document.getElementById('number-line-canvas');
+        const ctx = canvas.getContext('2d');
+        const problemDisplay = document.getElementById('inequality-problem');
+        const intervalInput = document.getElementById('interval-notation');
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackEl = document.getElementById('feedback');
+        const streakCountEl = document.getElementById('streak-count');
+        
+        // Control Containers
+        const simpleControlsEl = document.getElementById('simple-controls');
+        const compoundControlsEl = document.getElementById('compound-controls');
+
+        // Simple Controls
+        const openCircleBtn = document.getElementById('open-circle-btn');
+        const closedCircleBtn = document.getElementById('closed-circle-btn');
+        const shadeLeftBtn = document.getElementById('shade-left-btn');
+        const shadeRightBtn = document.getElementById('shade-right-btn');
+        
+        // Compound Controls
+        const buttons = {
+            leftOpen: document.getElementById('left-open-btn'),
+            leftClosed: document.getElementById('left-closed-btn'),
+            rightOpen: document.getElementById('right-open-btn'),
+            rightClosed: document.getElementById('right-closed-btn'),
+            shadeBetween: document.getElementById('shade-between-btn'),
+            shadeOutwards: document.getElementById('shade-outwards-btn'),
+        };
+        
+        let currentInequality = {};
+        let userSelection = {
+            // Simple
+            simpleEndpoint: null,
+            simpleShading: null,
+            // Compound
+            leftEndpoint: null,
+            rightEndpoint: null,
+            compoundShading: null
+        };
+        let streak = 0;
+        
+        // --- All Buttons Array for easy reset ---
+        const allControlButtons = [
+            openCircleBtn, closedCircleBtn, shadeLeftBtn, shadeRightBtn,
+            ...Object.values(buttons)
+        ];
+
+        // --- Inequality Generation ---
+        
+        function generateSimpleInequality() {
+            const operators = ['<', '>', '<=', '>='];
+            const operator = operators[Math.floor(Math.random() * operators.length)];
+            const number = Math.floor(Math.random() * 21) - 10; // -10 to 10
+
+            let correctEndpoint, correctShading, correctInterval;
+
+            if (operator === '<' || operator === '>') {
+                correctEndpoint = 'open';
+            } else {
+                correctEndpoint = 'closed';
+            }
+
+            if (operator === '<' || operator === '<=') {
+                correctShading = 'left';
+                correctInterval = `(-Inf, ${number}${correctEndpoint === 'open' ? ')' : ']'}`;
+            } else {
+                correctShading = 'right';
+                correctInterval = `${correctEndpoint === 'open' ? '(' : '['}${number}, Inf)`;
+            }
+
+            return {
+                type: 'simple',
+                text: `x ${operator} ${number}`,
+                number: number,
+                operator: operator,
+                correctEndpoint: correctEndpoint,
+                correctShading: correctShading,
+                correctInterval: correctInterval
+            };
+        }
+
+        function generateCompoundInequality() {
+            const type = Math.random() > 0.5 ? 'conjunction' : 'disjunction';
+            let num1 = Math.floor(Math.random() * 11) - 10; // -10 to 0
+            let num2 = Math.floor(Math.random() * 11) + 1;  // 1 to 11
+            
+            const op1_strict = '<';
+            const op1_inclusive = '<=';
+            const op2_strict = '>';
+            const op2_inclusive = '>=';
+
+            let problem = { type: 'compound' };
+
+            if (type === 'conjunction') {
+                const opLeft = Math.random() > 0.5 ? op1_strict : op1_inclusive;
+                const opRight = Math.random() > 0.5 ? op1_strict : op1_inclusive;
+                
+                problem.text = `${num1} ${opLeft} x ${opRight} ${num2}`;
+                problem.correctLeftEndpoint = opLeft === op1_strict ? 'open' : 'closed';
+                problem.correctRightEndpoint = opRight === op1_strict ? 'open' : 'closed';
+                problem.correctShading = 'between';
+                const leftBracket = problem.correctLeftEndpoint === 'open' ? '(' : '[';
+                const rightBracket = problem.correctRightEndpoint === 'open' ? ')' : ']';
+                problem.correctInterval = `${leftBracket}${num1}, ${num2}${rightBracket}`;
+            } else { // disjunction
+                const opLeft = Math.random() > 0.5 ? op1_strict : op1_inclusive;
+                const opRight = Math.random() > 0.5 ? op2_strict : op2_inclusive;
+
+                problem.text = `x ${opLeft} ${num1} or x ${opRight} ${num2}`;
+                problem.correctLeftEndpoint = opLeft === op1_strict ? 'open' : 'closed';
+                problem.correctRightEndpoint = opRight === op2_strict ? 'open' : 'closed';
+                problem.correctShading = 'outwards';
+                const leftBracket = problem.correctLeftEndpoint === 'open' ? ')' : ']';
+                const rightBracket = problem.correctRightEndpoint === 'open' ? '(' : '[';
+                problem.correctInterval = `(-Inf, ${num1}${leftBracket} U ${rightBracket}${num2}, Inf)`;
+            }
+            
+            problem.num1 = num1;
+            problem.num2 = num2;
+            return problem;
+        }
+
+        function generateInequality() {
+            if (Math.random() > 0.5) {
+                return generateSimpleInequality();
+            } else {
+                return generateCompoundInequality();
+            }
+        }
+
+        // --- Canvas Drawing ---
+        function drawNumberLine() {
+            const min = -11;
+            const max = 11;
+            
+            // High-res canvas setup
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const canvasWidth = canvas.clientWidth;
+            const canvasHeight = canvas.clientHeight;
+            const centerY = canvasHeight / 2;
+            const tickHeight = 10;
+
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            const mapNumberToX = (num) => {
+                return ( (num - min) / (max - min) ) * canvasWidth;
+            };
+            
+            // Draw main line
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvasWidth, centerY);
+            ctx.strokeStyle = '#374151'; // gray-700
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw ticks and numbers
+            for (let i = min + 1; i < max; i++) {
+                const x = mapNumberToX(i);
+                ctx.beginPath();
+                ctx.moveTo(x, centerY - tickHeight / 2);
+                ctx.lineTo(x, centerY + tickHeight / 2);
+                ctx.strokeStyle = '#6b7280'; // gray-500
+                ctx.stroke();
+
+                if (i % 2 === 0) {
+                    ctx.font = '12px Inter';
+                    ctx.fillStyle = '#4b5563'; // gray-600
+                    ctx.textAlign = 'center';
+                    ctx.fillText(i, x, centerY + 25);
+                }
+            }
+            
+            // Draw user selections based on problem type
+            drawUserSelections(mapNumberToX);
+        }
+
+        function drawUserSelections(mapNumberToX) {
+            const centerY = canvas.clientHeight / 2;
+            const canvasWidth = canvas.clientWidth;
+            
+            // Helper function to draw endpoints (from compound)
+            const drawEndpoint = (x, type) => {
+                if (!type) return;
+                const radius = 6;
+                ctx.beginPath();
+                ctx.arc(x, centerY, radius, 0, 2 * Math.PI);
+                
+                if (type === 'open') {
+                    ctx.strokeStyle = '#4f46e5';
+                    ctx.lineWidth = 2;
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (type === 'closed') {
+                    ctx.fillStyle = '#4f46e5';
+                    ctx.fill();
+                }
+            };
+
+            if (currentInequality.type === 'simple') {
+                const { number } = currentInequality;
+                const boundaryX = mapNumberToX(number);
+
+                // Shade (from simple)
+                if (userSelection.simpleShading) {
+                    ctx.fillStyle = 'rgba(79, 70, 229, 0.3)'; // Indigo with transparency
+                    ctx.strokeStyle = '#4f46e5'; // Indigo
+                    ctx.lineWidth = 3;
+                    
+                    if (userSelection.simpleShading === 'left') {
+                        ctx.fillRect(0, centerY - 8, boundaryX, 16);
+                        ctx.beginPath();
+                        ctx.moveTo(0, centerY);
+                        ctx.lineTo(boundaryX, centerY);
+                        ctx.stroke();
+                    } else if (userSelection.simpleShading === 'right') {
+                        ctx.fillRect(boundaryX, centerY - 8, canvasWidth - boundaryX, 16);
+                        ctx.beginPath();
+                        ctx.moveTo(boundaryX, centerY);
+                        ctx.lineTo(canvasWidth, centerY);
+                        ctx.stroke();
+                    }
+                }
+                // Endpoint (from simple, using helper)
+                drawEndpoint(boundaryX, userSelection.simpleEndpoint);
+
+            } else { // 'compound'
+                const { num1, num2 } = currentInequality;
+                const x1 = mapNumberToX(num1);
+                const x2 = mapNumberToX(num2);
+
+                // Shade (from compound)
+                if (userSelection.compoundShading) {
+                    ctx.fillStyle = 'rgba(79, 70, 229, 0.3)';
+                    ctx.strokeStyle = '#4f46e5';
+                    ctx.lineWidth = 3;
+                    
+                    if (userSelection.compoundShading === 'between') {
+                        ctx.fillRect(x1, centerY - 8, x2 - x1, 16);
+                        ctx.beginPath();
+                        ctx.moveTo(x1, centerY);
+                        ctx.lineTo(x2, centerY);
+                        ctx.stroke();
+                    } else if (userSelection.compoundShading === 'outwards') {
+                        ctx.fillRect(0, centerY - 8, x1, 16);
+                        ctx.fillRect(x2, centerY - 8, canvasWidth - x2, 16);
+                        ctx.beginPath();
+                        ctx.moveTo(0, centerY);
+                        ctx.lineTo(x1, centerY);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(x2, centerY);
+                        ctx.lineTo(canvasWidth, centerY);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Endpoints (from compound)
+                drawEndpoint(x1, userSelection.leftEndpoint);
+                drawEndpoint(x2, userSelection.rightEndpoint);
+            }
+        }
+        
+        function updateStreakDisplay() {
+            streakCountEl.textContent = streak;
+            streakCountEl.parentElement.classList.remove('streak-pop');
+            // A trick to re-trigger the animation
+            void streakCountEl.parentElement.offsetWidth; 
+            streakCountEl.parentElement.classList.add('streak-pop');
+        }
+
+        // --- Event Listeners and Logic ---
+        function setupNewQuestion() {
+            currentInequality = generateInequality();
+            problemDisplay.textContent = currentInequality.text;
+            
+            // Reset state
+            userSelection = {
+                simpleEndpoint: null, simpleShading: null,
+                leftEndpoint: null, rightEndpoint: null, compoundShading: null
+            };
+            intervalInput.value = '';
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'h-8 mb-4 text-center text-xl font-semibold';
+
+            checkBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+            intervalInput.disabled = false;
+            
+            // Reset button styles
+            allControlButtons.forEach(btn => btn.classList.remove('btn-selected'));
+            
+            // Show/Hide relevant controls
+            if (currentInequality.type === 'simple') {
+                simpleControlsEl.style.display = 'grid';
+                compoundControlsEl.style.display = 'none';
+            } else {
+                simpleControlsEl.style.display = 'none';
+                compoundControlsEl.style.display = 'grid';
+            }
+            
+            drawNumberLine();
+        }
+        
+        function checkAnswer() {
+            // Standardize input: remove spaces, replace 'infinity' with 'Inf'
+            const format = (str) => str.replace(/\s/g, '').replace(/infinity/gi, 'Inf');
+            
+            const userAnswer = format(intervalInput.value);
+            const correctAnswer = format(currentInequality.correctInterval);
+
+            const isIntervalCorrect = userAnswer === correctAnswer;
+            
+            let isGraphCorrect = false;
+            
+            if (currentInequality.type === 'simple') {
+                isGraphCorrect = userSelection.simpleEndpoint === currentInequality.correctEndpoint &&
+                                 userSelection.simpleShading === currentInequality.correctShading;
+            } else { // 'compound'
+                isGraphCorrect = userSelection.leftEndpoint === currentInequality.correctLeftEndpoint &&
+                                 userSelection.rightEndpoint === currentInequality.correctRightEndpoint &&
+                                 userSelection.compoundShading === currentInequality.correctShading;
+            }
+
+            if (isGraphCorrect && isIntervalCorrect) {
+                streak++;
+                feedbackEl.textContent = 'Correct! Well done!';
+                feedbackEl.className += ' text-green-600 feedback-correct';
+                checkBtn.style.display = 'none';
+                nextBtn.style.display = 'inline-block';
+                intervalInput.disabled = true;
+            } else {
+                streak = 0;
+                let errorMessages = [];
+                if (!isGraphCorrect) errorMessages.push("The graph is not quite right.");
+                if (!isIntervalCorrect) errorMessages.push("Check your interval notation.");
+                
+                feedbackEl.textContent = errorMessages.join(' ');
+                feedbackEl.className += ' text-red-600 feedback-incorrect';
+            }
+            updateStreakDisplay();
+        }
+        
+        // --- Button Click Handlers ---
+        
+        // Simple Controls
+        openCircleBtn.addEventListener('click', () => {
+            userSelection.simpleEndpoint = 'open';
+            openCircleBtn.classList.add('btn-selected');
+            closedCircleBtn.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+
+        closedCircleBtn.addEventListener('click', () => {
+            userSelection.simpleEndpoint = 'closed';
+            closedCircleBtn.classList.add('btn-selected');
+            openCircleBtn.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        
+        shadeLeftBtn.addEventListener('click', () => {
+            userSelection.simpleShading = 'left';
+            shadeLeftBtn.classList.add('btn-selected');
+            shadeRightBtn.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        
+        shadeRightBtn.addEventListener('click', () => {
+            userSelection.simpleShading = 'right';
+            shadeRightBtn.classList.add('btn-selected');
+            shadeLeftBtn.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+
+        // Compound Controls
+        buttons.leftOpen.addEventListener('click', () => {
+            userSelection.leftEndpoint = 'open';
+            buttons.leftOpen.classList.add('btn-selected');
+            buttons.leftClosed.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        buttons.leftClosed.addEventListener('click', () => {
+            userSelection.leftEndpoint = 'closed';
+            buttons.leftClosed.classList.add('btn-selected');
+            buttons.leftOpen.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        buttons.rightOpen.addEventListener('click', () => {
+            userSelection.rightEndpoint = 'open';
+            buttons.rightOpen.classList.add('btn-selected');
+            buttons.rightClosed.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        buttons.rightClosed.addEventListener('click', () => {
+            userSelection.rightEndpoint = 'closed';
+            buttons.rightClosed.classList.add('btn-selected');
+            buttons.rightOpen.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        buttons.shadeBetween.addEventListener('click', () => {
+            userSelection.compoundShading = 'between';
+            buttons.shadeBetween.classList.add('btn-selected');
+            buttons.shadeOutwards.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        buttons.shadeOutwards.addEventListener('click', () => {
+            userSelection.compoundShading = 'outwards';
+            buttons.shadeOutwards.classList.add('btn-selected');
+            buttons.shadeBetween.classList.remove('btn-selected');
+            drawNumberLine();
+        });
+        
+        // Main Action Buttons
+        checkBtn.addEventListener('click', checkAnswer);
+        nextBtn.addEventListener('click', setupNewQuestion);
+
+        // --- Initial Setup ---
+        window.addEventListener('resize', drawNumberLine);
+        setupNewQuestion();
+
+    </script>
+</body>
+</html>
