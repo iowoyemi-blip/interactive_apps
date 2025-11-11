@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mixed Line Equation Challenge</title>
+    <style>
+      :root {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #1f2933;
+        background-color: #f7f8fa;
+      }
+
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .app {
+        max-width: 1100px;
+        width: 100%;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 16px 30px rgba(15, 30, 60, 0.12);
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: minmax(340px, 1fr) 360px;
+        gap: 2rem;
+      }
+
+      canvas {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #dfe3e8;
+      }
+
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 2rem;
+      }
+
+      p {
+        margin: 0 0 1rem;
+        color: #4c5669;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        padding: 0.65rem 0.8rem;
+        border-bottom: 1px solid #eceff4;
+        text-align: left;
+      }
+
+      th {
+        background: #f1f5f9;
+        font-weight: 600;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .answer-input {
+        width: 100%;
+        padding: 0.45rem 0.5rem;
+        border: 1px solid #c7d2e0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+      }
+
+      .answer-input:focus {
+        outline: 2px solid #2563eb;
+        border-color: transparent;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .status.correct {
+        color: #15803d;
+      }
+
+      .status.incorrect {
+        color: #c026d3;
+      }
+
+      .streak-card {
+        margin: 1.25rem 0;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #fbbf24, #f97316);
+        color: #fff;
+        box-shadow: 0 12px 24px rgba(249, 115, 22, 0.35);
+      }
+
+      .streak-label {
+        margin: 0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.9;
+      }
+
+      .streak-value {
+        margin: 0.2rem 0 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.2rem;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.65rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .primary {
+        background: #2563eb;
+        color: #fff;
+        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
+      }
+
+      .primary:hover:enabled {
+        transform: translateY(-1px);
+      }
+
+      .secondary {
+        background: #1f2933;
+        color: #fff;
+        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.25);
+      }
+
+      #feedback {
+        margin-top: 1rem;
+        font-size: 1rem;
+      }
+
+      .correct-row {
+        background: rgba(34, 197, 94, 0.12);
+      }
+
+      .incorrect-row {
+        background: rgba(248, 113, 113, 0.12);
+      }
+
+      @media (max-width: 960px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section>
+        <h1>Mixed Line Equation Challenge</h1>
+        <p>Identify the equations for vertical, horizontal, and slanted lines.</p>
+        <canvas
+          id="grid"
+          width="520"
+          height="520"
+          aria-label="Coordinate plane"
+        ></canvas>
+      </section>
+      <section>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Line</th>
+              <th scope="col">Equation</th>
+            </tr>
+          </thead>
+          <tbody id="line-entries"></tbody>
+        </table>
+        <div class="streak-card" aria-live="polite">
+          <p class="streak-label">Perfect Streak</p>
+          <p class="streak-value" id="streak-count">0 sets</p>
+        </div>
+        <div class="actions">
+          <button id="submit" class="primary">Submit Answers</button>
+          <button id="new-set" class="secondary" type="button">New Set</button>
+        </div>
+        <div id="feedback" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script>
+      const GRID_MIN = -8;
+      const GRID_MAX = 8;
+      const SLANTED_COUNT = 6;
+      const HORIZONTAL_COUNT = 2;
+      const VERTICAL_COUNT = 2;
+      const LINE_COLORS = [
+        "#ef4444",
+        "#f97316",
+        "#f59e0b",
+        "#10b981",
+        "#14b8a6",
+        "#06b6d4",
+        "#3b82f6",
+        "#8b5cf6",
+        "#d946ef",
+        "#ec4899",
+      ];
+
+      const canvas = document.getElementById("grid");
+      const ctx = canvas.getContext("2d");
+      const tbody = document.getElementById("line-entries");
+      const submitButton = document.getElementById("submit");
+      const newSetButton = document.getElementById("new-set");
+      const feedback = document.getElementById("feedback");
+      const streakNode = document.getElementById("streak-count");
+
+      let currentLines = [];
+      let perfectStreak = 0;
+
+      const shuffle = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      };
+
+      const randomInt = (min, max) =>
+        Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const getUniquePositions = (count) => {
+        const values = new Set();
+        const min = GRID_MIN + 1;
+        const max = GRID_MAX - 1;
+        while (values.size < count) {
+          values.add(randomInt(min, max));
+        }
+        return [...values];
+      };
+
+      const generateSlantedLines = () => {
+        const positives = [1, 2, 3, 4];
+        const negatives = [-1, -2, -3, -4];
+        const slopes = [
+          ...shuffle(positives).slice(0, SLANTED_COUNT / 2),
+          ...shuffle(negatives).slice(0, SLANTED_COUNT / 2),
+        ];
+        return slopes.map((slope) => ({
+          type: "slanted",
+          slope,
+          intercept: randomInt(-5, 5),
+        }));
+      };
+
+      const generateLines = () => {
+        const slanted = generateSlantedLines();
+        const horizontals = getUniquePositions(HORIZONTAL_COUNT).map((value) => ({
+          type: "horizontal",
+          value,
+        }));
+        const verticals = getUniquePositions(VERTICAL_COUNT).map((value) => ({
+          type: "vertical",
+          value,
+        }));
+
+        const palette = shuffle([
+          ...LINE_COLORS,
+          ...LINE_COLORS,
+          ...LINE_COLORS,
+        ]);
+        currentLines = shuffle([...slanted, ...horizontals, ...verticals]).map(
+          (line, idx) => ({
+            ...line,
+            label: String.fromCharCode(65 + idx),
+            color: palette[idx % palette.length],
+          })
+        );
+
+        renderTable();
+        drawPlane();
+        feedback.textContent = "";
+      };
+
+      const renderTable = () => {
+        tbody.innerHTML = "";
+        currentLines.forEach((line, idx) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>Line ${line.label}</td>
+            <td>
+              <input
+                type="text"
+                class="answer-input"
+                data-index="${idx}"
+                placeholder="Type the equation"
+                aria-label="Equation for line ${line.label}"
+              />
+              <div class="status" id="status-${idx}"></div>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      };
+
+      const drawPlane = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = GRID_MIN; i <= GRID_MAX; i++) {
+          const x = mapToCanvas(i, true);
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          const y = mapToCanvas(i, false);
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, height);
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
+
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.font = "bold 20px Helvetica";
+
+        currentLines.forEach((line) => {
+          ctx.strokeStyle = line.color;
+          ctx.fillStyle = line.color;
+          ctx.beginPath();
+          const [start, end] = getLineEndpoints(line);
+          ctx.moveTo(mapToCanvas(start.x, true), mapToCanvas(start.y, false));
+          ctx.lineTo(mapToCanvas(end.x, true), mapToCanvas(end.y, false));
+          ctx.stroke();
+
+          const labelPoint = {
+            x: (start.x + end.x) / 2,
+            y: (start.y + end.y) / 2,
+          };
+
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(
+            line.label,
+            mapToCanvas(labelPoint.x, true),
+            mapToCanvas(labelPoint.y, false)
+          );
+        });
+
+        ctx.fillStyle = "#374151";
+        ctx.font = "14px Helvetica";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for (let i = GRID_MIN; i <= GRID_MAX; i++) {
+          if (i !== 0) {
+            const x = mapToCanvas(i, true);
+            ctx.fillText(i, x, centerY + (i > 0 ? 6 : -20));
+            const y = mapToCanvas(i, false);
+            ctx.textAlign = "right";
+            ctx.fillText(i, centerX - 6, y);
+            ctx.textAlign = "center";
+          }
+        }
+      };
+
+      const getLineEndpoints = (line) => {
+        if (line.type === "vertical") {
+          return [
+            { x: line.value, y: GRID_MIN },
+            { x: line.value, y: GRID_MAX },
+          ];
+        }
+        if (line.type === "horizontal") {
+          return [
+            { x: GRID_MIN, y: line.value },
+            { x: GRID_MAX, y: line.value },
+          ];
+        }
+
+        const points = [];
+
+        const yAtMinX = line.slope * GRID_MIN + line.intercept;
+        if (yAtMinX >= GRID_MIN && yAtMinX <= GRID_MAX) {
+          points.push({ x: GRID_MIN, y: yAtMinX });
+        }
+
+        const yAtMaxX = line.slope * GRID_MAX + line.intercept;
+        if (yAtMaxX >= GRID_MIN && yAtMaxX <= GRID_MAX) {
+          points.push({ x: GRID_MAX, y: yAtMaxX });
+        }
+
+        const xAtMinY = (GRID_MIN - line.intercept) / line.slope;
+        if (xAtMinY >= GRID_MIN && xAtMinY <= GRID_MAX) {
+          points.push({ x: xAtMinY, y: GRID_MIN });
+        }
+
+        const xAtMaxY = (GRID_MAX - line.intercept) / line.slope;
+        if (xAtMaxY >= GRID_MIN && xAtMaxY <= GRID_MAX) {
+          points.push({ x: xAtMaxY, y: GRID_MAX });
+        }
+
+        const uniquePoints = [];
+        points.forEach((pt) => {
+          if (
+            !uniquePoints.some(
+              (existing) =>
+                Math.abs(existing.x - pt.x) < 1e-6 &&
+                Math.abs(existing.y - pt.y) < 1e-6
+            )
+          ) {
+            uniquePoints.push(pt);
+          }
+        });
+
+        if (uniquePoints.length < 2) {
+          return [
+            { x: GRID_MIN, y: line.slope * GRID_MIN + line.intercept },
+            { x: GRID_MAX, y: line.slope * GRID_MAX + line.intercept },
+          ];
+        }
+
+        return [uniquePoints[0], uniquePoints[uniquePoints.length - 1]];
+      };
+
+      const mapToCanvas = (value, isX) => {
+        const span = GRID_MAX - GRID_MIN;
+        const size = isX ? canvas.width : canvas.height;
+        if (isX) {
+          return ((value - GRID_MIN) / span) * size;
+        }
+        return ((GRID_MAX - value) / span) * size;
+      };
+
+      const parseEquation = (input) => {
+        const cleaned = input.replace(/\s+/g, "").toLowerCase();
+        if (!cleaned.includes("=")) return null;
+
+        if (/^x=/.test(cleaned)) {
+          const value = parseFloat(cleaned.slice(2));
+          if (Number.isNaN(value)) return null;
+          return { type: "vertical", value };
+        }
+
+        if (/^y=/.test(cleaned) && !cleaned.includes("x")) {
+          const value = parseFloat(cleaned.slice(2));
+          if (Number.isNaN(value)) return null;
+          return { type: "horizontal", value };
+        }
+
+        if (/^y=/.test(cleaned) && cleaned.includes("x")) {
+          const expr = cleaned.slice(2);
+          const xIndex = expr.indexOf("x");
+          if (xIndex === -1) return null;
+
+          const slopePart = expr.slice(0, xIndex);
+          const interceptPart = expr.slice(xIndex + 1);
+
+          let slope;
+          if (slopePart === "" || slopePart === "+") slope = 1;
+          else if (slopePart === "-") slope = -1;
+          else {
+            slope = parseFloat(slopePart);
+          }
+          if (Number.isNaN(slope) || Math.abs(slope) < 1e-9) return null;
+
+          let intercept = 0;
+          if (interceptPart) {
+            intercept = parseFloat(interceptPart);
+            if (Number.isNaN(intercept)) return null;
+          }
+
+          return { type: "slanted", slope, intercept };
+        }
+
+        return null;
+      };
+
+      const clearRowState = () => {
+        tbody.querySelectorAll("tr").forEach((row) => {
+          row.classList.remove("correct-row", "incorrect-row");
+        });
+        tbody.querySelectorAll(".status").forEach((node) => {
+          node.textContent = "";
+          node.classList.remove("correct", "incorrect");
+        });
+      };
+
+      const checkAnswers = () => {
+        clearRowState();
+        let score = 0;
+        const inputs = document.querySelectorAll(".answer-input");
+
+        currentLines.forEach((line, idx) => {
+          const response = parseEquation(inputs[idx].value);
+          const row = inputs[idx].closest("tr");
+          const status = document.getElementById(`status-${idx}`);
+          let correct = false;
+
+          if (response && response.type === line.type) {
+            if (line.type === "vertical" || line.type === "horizontal") {
+              if (Math.abs(response.value - line.value) < 1e-6) {
+                correct = true;
+              }
+            } else if (line.type === "slanted") {
+              if (
+                Math.abs(response.slope - line.slope) < 1e-6 &&
+                Math.abs(response.intercept - line.intercept) < 1e-6
+              ) {
+                correct = true;
+              }
+            }
+          }
+
+          if (correct) {
+            score++;
+            row.classList.add("correct-row");
+            status.textContent = "Correct";
+            status.classList.add("correct");
+          } else {
+            row.classList.add("incorrect-row");
+            status.classList.add("incorrect");
+            if (line.type === "slanted") {
+              const slopeStr =
+                line.slope === 1
+                  ? ""
+                  : line.slope === -1
+                  ? "-"
+                  : `${line.slope}`;
+              const interceptStr =
+                line.intercept > 0
+                  ? `+${line.intercept}`
+                  : line.intercept < 0
+                  ? `${line.intercept}`
+                  : "";
+              status.textContent = `Expected y = ${slopeStr}x${interceptStr || ""}`;
+            } else {
+              status.textContent = `Expected ${
+                line.type === "vertical" ? "x" : "y"
+              } = ${line.value}`;
+            }
+          }
+        });
+
+        feedback.textContent = `You answered ${score} out of ${currentLines.length} correctly. Review your work, then click "New Set" when ready.`;
+
+        if (score === currentLines.length) {
+          perfectStreak += 1;
+        } else {
+          perfectStreak = 0;
+        }
+        streakNode.textContent = `${perfectStreak} ${
+          perfectStreak === 1 ? "set" : "sets"
+        }`;
+      };
+
+      submitButton.addEventListener("click", () => {
+        checkAnswers();
+      });
+
+      newSetButton.addEventListener("click", () => {
+        generateLines();
+      });
+
+      generateLines();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vertical & Horizontal Line Practice</title>
+    <style>
+      :root {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #1f2933;
+        background-color: #f7f8fa;
+      }
+
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .app {
+        max-width: 1000px;
+        width: 100%;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(15, 30, 60, 0.12);
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) 340px;
+        gap: 2rem;
+      }
+
+      canvas {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #dfe3e8;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.9rem;
+      }
+
+      p {
+        margin: 0 0 1rem;
+        color: #4c5669;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #dfe3e8;
+        border-radius: 12px;
+        overflow: hidden;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        padding: 0.65rem 0.8rem;
+        border-bottom: 1px solid #eceff4;
+        text-align: left;
+      }
+
+      th {
+        background: #f1f5f9;
+        font-weight: 600;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .answer-input {
+        width: 100%;
+        padding: 0.45rem 0.5rem;
+        border: 1px solid #c7d2e0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+      }
+
+      .answer-input:focus {
+        outline: 2px solid #2563eb;
+        border-color: transparent;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .status.correct {
+        color: #15803d;
+      }
+
+      .status.incorrect {
+        color: #c026d3;
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .streak-card {
+        margin: 1.25rem 0;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: #fff;
+        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.35);
+      }
+
+      .streak-label {
+        margin: 0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.9;
+      }
+
+      .streak-value {
+        margin: 0.2rem 0 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.65rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .primary {
+        background: #2563eb;
+        color: #fff;
+        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
+      }
+
+      .primary:hover:enabled {
+        transform: translateY(-1px);
+      }
+
+      .secondary {
+        background: #1f2933;
+        color: #fff;
+        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.25);
+      }
+
+      #feedback {
+        margin-top: 1rem;
+        font-size: 1rem;
+      }
+
+      .correct-row {
+        background: rgba(34, 197, 94, 0.12);
+      }
+
+      .incorrect-row {
+        background: rgba(244, 114, 182, 0.12);
+      }
+
+      @media (max-width: 900px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section>
+        <h1>Show What You Know</h1>
+        <p>Write the equation for each highlighted vertical or horizontal line.</p>
+        <canvas id="grid" width="520" height="520" aria-label="Coordinate plane"></canvas>
+      </section>
+      <section>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Line</th>
+              <th scope="col">Equation</th>
+            </tr>
+          </thead>
+          <tbody id="line-entries"></tbody>
+        </table>
+        <div class="streak-card" aria-live="polite">
+          <div>
+            <p class="streak-label">Perfect Streak</p>
+            <p class="streak-value" id="streak-count">0 sets</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="submit" class="primary">Submit Answers</button>
+          <button id="new-set" class="secondary" type="button">New Set</button>
+        </div>
+        <div id="feedback" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script>
+      const GRID_MIN = -8;
+      const GRID_MAX = 8;
+      const LINES_PER_TYPE = 5;
+      const canvas = document.getElementById("grid");
+      const ctx = canvas.getContext("2d");
+      const tbody = document.getElementById("line-entries");
+      const submitButton = document.getElementById("submit");
+      const newSetButton = document.getElementById("new-set");
+      const feedback = document.getElementById("feedback");
+
+      let currentLines = [];
+      let perfectStreak = 0;
+
+      const shuffle = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      };
+
+      const getUniquePositions = (
+        count,
+        min = GRID_MIN + 1,
+        max = GRID_MAX - 1
+      ) => {
+        const rangeSize = max - min + 1;
+        if (count > rangeSize) {
+          throw new Error("Not enough positions available for the requested lines.");
+        }
+        const values = new Set();
+        while (values.size < count) {
+          const value =
+            Math.floor(Math.random() * rangeSize) + min;
+          values.add(value);
+        }
+        return [...values];
+      };
+
+      const generateLines = () => {
+        const verticals = getUniquePositions(
+          LINES_PER_TYPE,
+          GRID_MIN + 1,
+          GRID_MAX - 1
+        ).map((value) => ({
+          type: "vertical",
+          value,
+        }));
+        const horizontals = getUniquePositions(
+          LINES_PER_TYPE,
+          GRID_MIN + 1,
+          GRID_MAX - 1
+        ).map((value) => ({
+          type: "horizontal",
+          value,
+        }));
+
+        currentLines = shuffle([...verticals, ...horizontals]).map(
+          (line, index) => ({
+            ...line,
+            label: String.fromCharCode(65 + index),
+          })
+        );
+
+        renderTable();
+        drawPlane();
+        feedback.textContent = "";
+      };
+
+      const renderTable = () => {
+        tbody.innerHTML = "";
+        currentLines.forEach((line, idx) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>Line ${line.label}</td>
+            <td>
+              <input
+                type="text"
+                class="answer-input"
+                data-index="${idx}"
+                placeholder="Type the equation"
+                aria-label="Equation for line ${line.label}"
+              />
+              <div class="status" id="status-${idx}"></div>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      };
+
+      const drawPlane = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const width = canvas.width;
+        const height = canvas.height;
+        const units = GRID_MAX - GRID_MIN;
+        const step = width / units;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = GRID_MIN; i <= GRID_MAX; i++) {
+          const x = mapToCanvas(i, true);
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          const y = mapToCanvas(i, false);
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, height);
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.fillStyle = "#b91c1c";
+        ctx.font = "bold 20px Helvetica";
+        currentLines.forEach((line) => {
+          ctx.beginPath();
+          if (line.type === "vertical") {
+            const x = mapToCanvas(line.value, true);
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(line.label, x, 8);
+          } else {
+            const y = mapToCanvas(line.value, false);
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
+            ctx.fillText(line.label, width - 8, y);
+          }
+        });
+
+        ctx.fillStyle = "#374151";
+        ctx.font = "14px Helvetica";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for (let i = GRID_MIN; i <= GRID_MAX; i++) {
+          const x = mapToCanvas(i, true);
+          const y = mapToCanvas(i, false);
+          if (i !== 0) {
+            ctx.fillText(i, x, centerY + (i > 0 ? 6 : -24));
+            ctx.fillText(i, centerX + (i > 0 ? 6 : -24), y);
+          }
+        }
+      };
+
+      const mapToCanvas = (value, isX) => {
+        const span = GRID_MAX - GRID_MIN;
+        const size = isX ? canvas.width : canvas.height;
+        if (isX) {
+          return ((value - GRID_MIN) / span) * size;
+        }
+        return ((GRID_MAX - value) / span) * size;
+      };
+
+      const parseEquation = (input) => {
+        const cleaned = input.replace(/\s+/g, "").toLowerCase();
+        const match = cleaned.match(/^([xy])=([-+]?\d+(?:\.\d+)?)$/);
+        if (!match) return null;
+        return { axis: match[1], value: parseFloat(match[2]) };
+      };
+
+      const clearRowState = () => {
+        tbody.querySelectorAll("tr").forEach((row) => {
+          row.classList.remove("correct-row", "incorrect-row");
+        });
+        tbody.querySelectorAll(".status").forEach((node) => {
+          node.textContent = "";
+          node.classList.remove("correct", "incorrect");
+        });
+      };
+
+      const checkAnswers = () => {
+        clearRowState();
+        let score = 0;
+        const inputs = document.querySelectorAll(".answer-input");
+        currentLines.forEach((line, idx) => {
+          const row = inputs[idx].closest("tr");
+          const status = document.getElementById(`status-${idx}`);
+          const parsed = parseEquation(inputs[idx].value);
+          let correct = false;
+          if (parsed) {
+            if (
+              line.type === "vertical" &&
+              parsed.axis === "x" &&
+              Math.abs(parsed.value - line.value) < 1e-6
+            ) {
+              correct = true;
+            }
+            if (
+              line.type === "horizontal" &&
+              parsed.axis === "y" &&
+              Math.abs(parsed.value - line.value) < 1e-6
+            ) {
+              correct = true;
+            }
+          }
+
+          if (correct) {
+            score++;
+            row.classList.add("correct-row");
+            status.textContent = "Correct";
+            status.classList.add("correct");
+          } else {
+            row.classList.add("incorrect-row");
+            status.textContent = `Expected ${
+              line.type === "vertical" ? "x" : "y"
+            } = ${line.value}`;
+            status.classList.add("incorrect");
+          }
+        });
+
+        feedback.textContent = `You answered ${score} out of ${currentLines.length} correctly. Review your work, then click "New Set" when ready.`;
+        if (score === currentLines.length) {
+          perfectStreak += 1;
+        } else {
+          perfectStreak = 0;
+        }
+        document.getElementById("streak-count").textContent = `${perfectStreak} ${
+          perfectStreak === 1 ? "set" : "sets"
+        }`;
+      };
+
+      submitButton.addEventListener("click", () => {
+        checkAnswers();
+      });
+
+      newSetButton.addEventListener("click", () => {
+        generateLines();
+      });
+
+      generateLines();
+    </script>
+  </body>
+</html>
