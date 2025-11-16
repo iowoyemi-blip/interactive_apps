@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphing Challenge: Find all 8 Equations</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use the Inter font family */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for correct/incorrect feedback */
+        .correct-answer {
+            border: 2px solid #22c55e; /* green-500 */
+            background-color: #f0fdf4; /* green-50 */
+        }
+        .incorrect-answer {
+            border: 2px solid #ef4444; /* red-500 */
+            background-color: #fef2f2; /* red-50 */
+        }
+        .correct-text {
+            color: #166534; /* green-800 */
+            font-weight: 600;
+        }
+        .incorrect-text {
+            color: #991b1b; /* red-800 */
+            font-weight: 600;
+        }
+        /* Style for the graph */
+        .graph-container {
+            width: 100%;
+            max-width: 480px; /* Larger graph */
+            margin: 0 auto;
+            position: relative;
+            aspect-ratio: 1 / 1; /* Keep it square */
+            border: 1px solid #ccc;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .graph-container svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .grid-line {
+            stroke: #e5e7eb; /* Light gray */
+            stroke-width: 1;
+        }
+        .axis-line {
+            stroke: #4b5563; /* Darker gray */
+            stroke-width: 2;
+        }
+        .function-line {
+            stroke-width: 3;
+            fill: none;
+        }
+        .axis-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            fill: #4b5563;
+        }
+        
+        /* Line Colors */
+        .line-red    { border-color: #ef4444; }
+        .line-yellow { border-color: #eab308; }
+        .line-orange { border-color: #f97316; }
+        .line-green  { border-color: #22c55e; }
+        .line-blue   { border-color: #3b82f6; }
+        .line-brown  { border-color: #854d0e; }
+        .line-purple { border-color: #8b5cf6; }
+        .line-teal   { border-color: #14b8a6; }
+
+        .svg-line-red    { stroke: #ef4444; }
+        .svg-line-yellow { stroke: #eab308; }
+        .svg-line-orange { stroke: #f97316; }
+        .svg-line-green  { stroke: #22c55e; }
+        .svg-line-blue   { stroke: #3b82f6; }
+        .svg-line-brown  { stroke: #854d0e; }
+        .svg-line-purple { stroke: #8b5cf6; }
+        .svg-line-teal   { stroke: #14b8a6; }
+
+        .label-red    { color: #ef4444; }
+        .label-yellow { color: #eab308; }
+        .label-orange { color: #f97316; }
+        .label-green  { color: #22c55e; }
+        .label-blue   { color: #3b82f6; }
+        .label-brown  { color: #854d0e; }
+        .label-purple { color: #8b5cf6; }
+        .label-teal   { color: #14b8a6; }
+
+        .input-row {
+            border-left-width: 6px;
+        }
+
+    </style>
+    <!-- Import Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div class="max-w-xl w-full">
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 text-center">Graphing Challenge</h1>
+            <p class="text-lg text-gray-600 text-center mt-2">Find the equations for all 8 lines!</p>
+            <!-- Game Stats: Lives and Score -->
+            <div id="game-stats" class="text-2xl font-bold text-center mt-4 text-gray-700 flex justify-center gap-6">
+                <div id="lives-counter" class="text-red-500">Lives: ❤️❤️❤️</div>
+                <div id="score-counter" class="text-blue-600">Score: 0</div>
+            </div>
+        </header>
+
+        <!-- Quiz Card -->
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl">
+            <!-- Question Area -->
+            <div id="quiz-area" class="space-y-6">
+                
+                <!-- Given Graph -->
+                <div class="text-center">
+                    <p class="text-lg text-gray-600">Given the following graph:</p>
+                    <div id="problem-representation" class="my-4 flex justify-center items-center">
+                        <div class="graph-container" id="graph-container">
+                            <!-- SVG Graph will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Question to Solve -->
+                <div class="border-t border-gray-200 pt-6">
+                    <p id="question-text" class="text-lg text-gray-600 text-center mb-4">
+                        Write the equation for each color-coded line.
+                        <br><span class="text-sm">(Use formats: <strong>y=5</strong>, <strong>x=-2</strong>, or <strong>y=3x+1</strong>. No spaces.)</span>
+                    </p>
+                </div>
+
+                <!-- Answer Input Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="input-grid">
+                    <!-- Input fields will be inserted here -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedback-area" class="text-center">
+                    <!-- Feedback and Solution will be injected here -->
+                </div>
+            </div>
+
+            <!-- Button Area -->
+            <div classs="mt-6">
+                <button id="check-btn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors shadow-md">
+                    Check All Answers
+                </button>
+                <button id="restart-btn" class="w-full bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-gray-600 transition-colors shadow-md mt-4 hidden">
+                    Restart Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const graphContainer = document.getElementById('graph-container');
+        const inputGrid = document.getElementById('input-grid');
+        const feedbackArea = document.getElementById('feedback-area');
+        const checkBtn = document.getElementById('check-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const livesCounter = document.getElementById('lives-counter');
+        const scoreCounter = document.getElementById('score-counter');
+
+        // --- Game State ---
+        let lives = 3;
+        let score = 0;
+        let isGameOver = false;
+        let currentLines = []; // Holds the 8 lines for the current round
+
+        // --- Helper: Get Random Integer ---
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // --- Helper: Generate Dynamic Lines ---
+        function generateLines() {
+            let usedH = new Set(); // Keep track of 'b' values for horizontal
+            let usedV = new Set(); // Keep track of 'a' values for vertical
+            let usedSlopes = new Set(); // Keep track of (m,b) pairs
+            
+            let generatedLines = [];
+            const colors = {
+                h: ['red', 'yellow', 'orange'],
+                v: ['green', 'blue', 'brown'],
+                s: ['purple', 'teal']
+            };
+            const labels = {
+                red: 'Red', yellow: 'Yellow', orange: 'Orange',
+                green: 'Green', blue: 'Blue', brown: 'Brown',
+                purple: 'Purple', teal: 'Teal'
+            };
+
+            // 1. Generate 3 Horizontal
+            for (let i = 0; i < 3; i++) {
+                let b;
+                do {
+                    b = getRandomInt(-6, 6);
+                } while (usedH.has(b)); // Ensure unique 'b'
+                usedH.add(b);
+                let color = colors.h[i];
+                generatedLines.push({
+                    id: `h${i}`, type: 'h', b: b, color: color, label: labels[color], correctAnswer: `y=${b}`
+                });
+            }
+
+            // 2. Generate 3 Vertical
+            for (let i = 0; i < 3; i++) {
+                let a;
+                do {
+                    a = getRandomInt(-6, 6);
+                } while (usedV.has(a)); // Ensure unique 'a'
+                usedV.add(a);
+                let color = colors.v[i];
+                generatedLines.push({
+                    id: `v${i}`, type: 'v', a: a, color: color, label: labels[color], correctAnswer: `x=${a}`
+                });
+            }
+
+            // 3. Generate 2 Slanted
+            // Slanted 1 (Positive Slope)
+            let m1, b1, slopeKey1;
+            do {
+                m1 = getRandomInt(1, 2); // Keep slopes simple (1 or 2)
+                b1 = getRandomInt(-3, 3); // Keep y-intercepts central
+                slopeKey1 = `${m1},${b1}`;
+            } while (usedSlopes.has(slopeKey1));
+            usedSlopes.add(slopeKey1);
+            let color1 = colors.s[0];
+            generatedLines.push({
+                id: 's1', type: 's', m: m1, b: b1, color: color1, label: labels[color1], correctAnswer: '' // Will be set below
+            });
+
+            // Slanted 2 (Negative Slope)
+            let m2, b2, slopeKey2;
+            do {
+                m2 = getRandomInt(-2, -1); // Keep slopes simple (-1 or -2)
+                b2 = getRandomInt(-3, 3);
+                slopeKey2 = `${m2},${b2}`;
+            } while (usedSlopes.has(slopeKey2) || slopeKey2 === slopeKey1); // Ensure unique
+            usedSlopes.add(slopeKey2);
+            let color2 = colors.s[1];
+            generatedLines.push({
+                id: 's2', type: 's', m: m2, b: b2, color: color2, label: labels[color2], correctAnswer: '' // Will be set below
+            });
+
+            // Format correct answers for slanted lines (e.g., y=x+3, y=-2x, y=x-1)
+            generatedLines.forEach(line => {
+                if (line.type === 's') {
+                    let m = line.m;
+                    let b = line.b;
+                    let mStr = (m === 1) ? "x" : (m === -1) ? "-x" : `${m}x`;
+                    let bStr = (b > 0) ? `+${b}` : (b < 0) ? `${b}` : ""; // Handle b=0
+                    line.correctAnswer = `y=${mStr}${bStr}`;
+                }
+            });
+
+            return generatedLines;
+        }
+
+        // --- Helper: Generate Graph ---
+        function createSvgGraph() {
+            graphContainer.innerHTML = ''; // Clear previous graph
+            const size = 480; // SVG viewBox size
+            const numGrids = 16; // -8 to 8
+            const gridSize = size / numGrids; // 1 unit = 30px
+            const mid = size / 2; // Middle of the SVG
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+            svg.setAttribute('aria-hidden', 'true');
+
+            // Draw grid lines
+            for (let i = 0; i <= numGrids; i++) {
+                let y = i * gridSize;
+                let hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hLine.setAttribute('x1', '0'); hLine.setAttribute('y1', y);
+                hLine.setAttribute('x2', size); hLine.setAttribute('y2', y);
+                hLine.classList.add('grid-line');
+                svg.appendChild(hLine);
+
+                let x = i * gridSize;
+                let vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                vLine.setAttribute('x1', x); vLine.setAttribute('y1', '0');
+                vLine.setAttribute('x2', x); vLine.setAttribute('y2', size);
+                vLine.classList.add('grid-line');
+                svg.appendChild(vLine);
+            }
+
+            // Draw axes
+            let xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', '0'); xAxis.setAttribute('y1', mid);
+            xAxis.setAttribute('x2', size); xAxis.setAttribute('y2', mid);
+            xAxis.classList.add('axis-line');
+            svg.appendChild(xAxis);
+
+            let yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', mid); yAxis.setAttribute('y1', '0');
+            yAxis.setAttribute('x2', mid); yAxis.setAttribute('y2', size);
+            yAxis.classList.add('axis-line');
+            svg.appendChild(yAxis);
+
+            // Add axis labels
+            function addLabel(x, y, text, align = 'middle', baseline = 'central') {
+                let label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', x);
+                label.setAttribute('y', y);
+                label.setAttribute('text-anchor', align);
+                label.setAttribute('dominant-baseline', baseline);
+                label.textContent = text;
+                label.classList.add('axis-label');
+                svg.appendChild(label);
+            }
+
+            for(let i = 1; i <= numGrids / 2; i++) {
+                if (i % 2 === 0) { // Label every 2 units
+                    addLabel(mid + (i * gridSize), mid + 12, i); // +x
+                    addLabel(mid - (i * gridSize), mid + 12, -i); // -x
+                    addLabel(mid - 12, mid - (i * gridSize), i, 'end'); // +y
+                    addLabel(mid - 12, mid + (i * gridSize), -i, 'end'); // -y
+                }
+            }
+            addLabel(size - 10, mid + 20, 'x', 'end', 'central'); // x-axis label
+            addLabel(mid - 20, 10, 'y', 'middle', 'start'); // y-axis label
+
+            // Convert Cartesian coordinates to SVG coordinates
+            function toSvgCoords(cx, cy) {
+                return {
+                    x: mid + (cx * gridSize),
+                    y: mid - (cy * gridSize) // SVG y-axis is inverted
+                };
+            }
+
+            // Draw all the function lines
+            currentLines.forEach(line => {
+                let p1, p2;
+                const range = numGrids / 2; // -8 to 8
+                
+                if (line.type === 'h') {
+                    p1 = toSvgCoords(-range, line.b);
+                    p2 = toSvgCoords(range, line.b);
+                } else if (line.type === 'v') {
+                    p1 = toSvgCoords(line.a, -range);
+                    p2 = toSvgCoords(line.a, range);
+                } else if (line.type === 's') {
+                    p1 = toSvgCoords(-range, line.m * (-range) + line.b);
+                    p2 = toSvgCoords(range, line.m * (range) + line.b);
+                }
+
+                let funcLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                funcLine.setAttribute('x1', p1.x);
+                funcLine.setAttribute('y1', p1.y);
+                funcLine.setAttribute('x2', p2.x);
+                funcLine.setAttribute('y2', p2.y);
+                funcLine.classList.add('function-line', `svg-line-${line.color}`);
+                svg.appendChild(funcLine);
+            });
+
+            graphContainer.appendChild(svg);
+        }
+
+        // --- Helper: Generate Input Fields ---
+        function createInputFields() {
+            inputGrid.innerHTML = ''; // Clear existing inputs
+            const shuffledLines = shuffleArray(currentLines); // Shuffle the lines array
+
+            shuffledLines.forEach(line => {
+                const div = document.createElement('div');
+                div.className = `input-row p-3 bg-white rounded-lg shadow-sm line-${line.color}`;
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', `input-${line.id}`);
+                label.className = `block text-sm font-bold mb-1 label-${line.color}`;
+                label.textContent = `${line.label} Line:`;
+                
+                const input = document.createElement('input');
+                input.setAttribute('type', 'text');
+                input.setAttribute('id', `input-${line.id}`);
+                input.setAttribute('data-answer', line.correctAnswer);
+                input.className = 'mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm text-lg';
+                input.setAttribute('placeholder', 'e.g., y=2x+3');
+                input.disabled = false; // Ensure inputs are enabled
+
+                div.appendChild(label);
+                div.appendChild(input);
+                inputGrid.appendChild(div);
+            });
+        }
+
+        // --- Update Stats ---
+        function updateStatsDisplay() {
+            livesCounter.innerHTML = `Lives: ${'❤️'.repeat(lives)}${'🖤'.repeat(3 - lives)}`;
+            scoreCounter.innerHTML = `Score: ${score}`;
+        }
+
+        // --- Helper: Shuffle Array (Fisher-Yates) ---
+        function shuffleArray(array) {
+            let newArray = [...array]; // Create a copy
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]]; // Swap
+            }
+            return newArray;
+        }
+
+        // --- Checking Logic ---
+        function checkAnswers() {
+            if (isGameOver) return;
+
+            let allCorrect = true;
+            
+            currentLines.forEach(line => {
+                const input = document.getElementById(`input-${line.id}`);
+                const userAnswer = input.value.replace(/\s/g, '').toLowerCase(); // Normalize input
+                const correctAnswer = line.correctAnswer.toLowerCase();
+
+                if (userAnswer === correctAnswer) {
+                    input.classList.remove('incorrect-answer');
+                    input.classList.add('correct-answer');
+                } else {
+                    input.classList.remove('incorrect-answer');
+                    input.classList.add('incorrect-answer');
+                    allCorrect = false;
+                }
+            });
+
+            if (allCorrect) {
+                // WIN CONDITION (Round Complete)
+                score++; // Increment score
+                updateStatsDisplay(); // Update display
+                feedbackArea.innerHTML = `<p class="correct-text text-xl font-bold mb-2">Round Complete! Score: ${score}</p>`;
+                checkBtn.classList.add('hidden');
+                restartBtn.textContent = 'Next Round'; // Change button text
+                restartBtn.classList.remove('hidden');
+                disableAllInputs();
+            } else {
+                // INCORRECT
+                lives--;
+                updateStatsDisplay(); // Score remains the same
+                
+                if (lives <= 0) {
+                    // GAME OVER
+                    isGameOver = true;
+                    feedbackArea.innerHTML = `<p class="incorrect-text text-xl font-bold mb-2">Game Over!</p><p class="text-gray-700 text-center text-lg">Your final score is: ${score}</p>`;
+                    checkBtn.classList.add('hidden');
+                    restartBtn.textContent = 'Restart Game'; // Change button text
+                    restartBtn.classList.remove('hidden');
+                    disableAllInputs();
+                    // Show correct answers for incorrect inputs
+                    currentLines.forEach(line => {
+                        const input = document.getElementById(`input-${line.id}`);
+                        if (input.classList.contains('incorrect-answer')) {
+                            input.value = line.correctAnswer; // Show correct answer
+                        }
+                    });
+                } else {
+                    // Just lost a life
+                    feedbackArea.innerHTML = `<p class="incorrect-text text-lg font-bold mb-2">Not quite! You lost a life. Fix the red boxes and try again.</p>`;
+                }
+            }
+        }
+
+        function disableAllInputs() {
+            currentLines.forEach(line => {
+                const input = document.getElementById(`input-${line.id}`);
+                if (input) {
+                    input.disabled = true;
+                }
+            });
+        }
+
+        // --- Start New Round (Helper) ---
+        function startNewRound() {
+            currentLines = generateLines(); // Generate new lines
+            createSvgGraph(); // Draw new graph
+            createInputFields(); // Create new (shuffled) inputs
+        }
+
+
+        // --- Restart Game / Next Round ---
+        function restartGame() {
+            if (isGameOver) { // Full reset
+                lives = 3;
+                score = 0;
+                isGameOver = false;
+            }
+            // For "Next Round", lives and score are preserved.
+            
+            updateStatsDisplay(); // Updates to 0 or current score
+            feedbackArea.innerHTML = '';
+            checkBtn.classList.remove('hidden');
+            restartBtn.classList.add('hidden');
+            
+            startNewRound(); // Generate new lines, graph, and inputs
+        }
+
+        // --- Event Listeners ---
+        checkBtn.addEventListener('click', checkAnswers);
+        restartBtn.addEventListener('click', restartGame);
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatsDisplay(0);
+            startNewRound();
+        });
+    </script>
+</body>
+</html>
