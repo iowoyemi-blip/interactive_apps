@@ -13,10 +13,6 @@
             background-color: #f8fafc;
         }
 
-        .unit-circle-svg {
-            transform: rotate(-90deg);
-        }
-
         .angle-marker {
             transition: all 0.3s ease;
         }
@@ -35,15 +31,14 @@
             100% { background-color: transparent; }
         }
 
-        /* Distinct Mode Buttons */
         .mode-btn {
-            @apply px-6 py-4 rounded-2xl text-sm font-black transition-all border-2 text-center uppercase tracking-widest shadow-sm flex-1 min-w-[140px];
+            @apply px-6 py-4 rounded-2xl text-sm font-black transition-all border-2 text-center uppercase tracking-widest shadow-sm flex-1 min-w-[120px];
         }
         .mode-active {
             @apply bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-200 scale-105 z-10;
         }
         .mode-inactive {
-            @apply bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-500 hover:shadow-md;
+            @apply bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-500;
         }
         
         .blitz-btn {
@@ -73,7 +68,7 @@
             </div>
         </header>
 
-        <!-- Mode Selector (Now 3 Distinct Buttons) -->
+        <!-- Mode Selector -->
         <div id="setup-panel" class="mb-10 flex flex-wrap justify-center gap-4 w-full">
             <button id="btn-basic" class="mode-btn mode-active" onclick="setMode('basic')">
                 <div class="text-[10px] mb-1 opacity-80">Primary</div>
@@ -96,8 +91,9 @@
             <div class="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden min-h-[440px]">
                 <div id="flash-overlay" class="absolute inset-0 pointer-events-none transition-colors duration-300"></div>
                 
-                <svg viewBox="-120 -120 240 240" class="w-full max-w-[280px] unit-circle-svg">
-                    <!-- Circle Decor -->
+                <!-- SVG viewBox is centered at 0,0. Angles go CCW from (100,0) -->
+                <svg viewBox="-120 -120 240 240" class="w-full max-w-[280px]">
+                    <!-- Background Circle -->
                     <circle cx="0" cy="0" r="100" fill="none" stroke="#f1f5f9" stroke-width="4" />
                     <circle cx="0" cy="0" r="100" fill="none" stroke="#e2e8f0" stroke-width="1" />
                     <!-- Axes -->
@@ -105,11 +101,12 @@
                     <line x1="0" y1="-115" x2="0" y2="115" stroke="#cbd5e1" stroke-width="1" />
                     
                     <g id="angle-markers"></g>
-                    <line id="active-line" x1="0" y1="0" x2="100" y2="0" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" style="display: none;"/>
+                    <!-- Line logic: Math Y is negated because SVG Y-down -->
+                    <line id="active-line" x1="0" y1="0" x2="100" y2="0" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" style="display: none;"/>
                 </svg>
 
                 <div class="mt-8 text-center z-10">
-                    <div id="question-text" class="text-4xl font-black text-slate-800 mb-1">Ready?</div>
+                    <div id="question-text" class="text-4xl font-black text-slate-800 mb-1">Select Mode</div>
                     <div id="angle-hint" class="text-blue-500 font-bold text-lg h-8"></div>
                     <div id="coord-display" class="mt-2 text-slate-400 font-mono font-medium text-sm h-5"></div>
                 </div>
@@ -246,10 +243,11 @@
         }
 
         function drawMarkers() {
+            angleMarkersGroup.innerHTML = '';
             ANGLES.forEach(a => {
                 const rad = (a.deg * Math.PI) / 180;
                 const x = Math.cos(rad) * 100;
-                const y = Math.sin(rad) * 100;
+                const y = -Math.sin(rad) * 100; // Negated for SVG screen coords
                 const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("cx", x);
                 circle.setAttribute("cy", y);
@@ -264,7 +262,7 @@
         function updateCircleUI(deg, showCoords = false) {
             const rad = (deg * Math.PI) / 180;
             const x = Math.cos(rad) * 100;
-            const y = Math.sin(rad) * 100;
+            const y = -Math.sin(rad) * 100; // Negated Y for upward math direction
             
             activeLine.setAttribute("x2", x);
             activeLine.setAttribute("y2", y);
@@ -342,7 +340,11 @@
             if (!isGameActive || gameMode === 'blitz') return;
             const userVal = answerInput.value.trim().toLowerCase().replace(/\s/g, '').replace('sqrt', '√');
             const correctVal = currentQuestion.answer.toLowerCase();
-            const isCorrect = (userVal === correctVal) || (userVal === '1/2' && correctVal === '0.5') || (userVal === '-1/2' && correctVal === '-0.5');
+            
+            const isCorrect = (userVal === correctVal) || 
+                              (userVal === '1/2' && correctVal === '0.5') || 
+                              (userVal === '-1/2' && correctVal === '-0.5');
+
             if (isCorrect) handleSuccess(); else handleFail();
         }
 
