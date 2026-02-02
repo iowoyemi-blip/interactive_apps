@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Circle Challenge - Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .unit-circle-svg {
+            transform: rotate(-90deg);
+        }
+
+        .angle-marker {
+            transition: all 0.3s ease;
+        }
+
+        .input-btn {
+            @apply px-2 py-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 active:scale-95 transition-all font-medium text-slate-700 shadow-sm text-sm sm:text-base;
+        }
+
+        .correct-flash {
+            animation: flashGreen 0.5s ease;
+        }
+
+        @keyframes flashGreen {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(34, 197, 94, 0.2); }
+            100% { background-color: transparent; }
+        }
+
+        /* Distinct Mode Buttons */
+        .mode-btn {
+            @apply px-6 py-4 rounded-2xl text-sm font-black transition-all border-2 text-center uppercase tracking-widest shadow-sm flex-1 min-w-[140px];
+        }
+        .mode-active {
+            @apply bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-200 scale-105 z-10;
+        }
+        .mode-inactive {
+            @apply bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-500 hover:shadow-md;
+        }
+        
+        .blitz-btn {
+            @apply h-24 flex items-center justify-center text-4xl font-bold rounded-2xl transition-all active:scale-95 shadow-lg;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <div class="max-w-5xl w-full">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight">Unit Circle <span class="text-blue-600">Pro</span></h1>
+                <p class="text-slate-500 text-sm font-medium">Targeted practice for trig fluency.</p>
+            </div>
+            
+            <div class="flex gap-3 items-center w-full md:w-auto">
+                <div class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center flex-1 md:flex-none">
+                    <span class="text-[10px] uppercase font-black text-slate-400 mb-1">Time</span>
+                    <span id="timer" class="text-2xl font-mono font-bold text-blue-600">60s</span>
+                </div>
+                <div class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center flex-1 md:flex-none">
+                    <span class="text-[10px] uppercase font-black text-slate-400 mb-1">Score</span>
+                    <span id="score" class="text-2xl font-mono font-bold text-green-600">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mode Selector (Now 3 Distinct Buttons) -->
+        <div id="setup-panel" class="mb-10 flex flex-wrap justify-center gap-4 w-full">
+            <button id="btn-basic" class="mode-btn mode-active" onclick="setMode('basic')">
+                <div class="text-[10px] mb-1 opacity-80">Primary</div>
+                Basic
+            </button>
+            <button id="btn-pro" class="mode-btn mode-inactive" onclick="setMode('pro')">
+                <div class="text-[10px] mb-1 opacity-80">All 6</div>
+                Advanced
+            </button>
+            <button id="btn-blitz" class="mode-btn mode-inactive" onclick="setMode('blitz')">
+                <div class="text-[10px] mb-1 opacity-80">Quadrant Signs</div>
+                Sign Blitz
+            </button>
+        </div>
+
+        <!-- Main Game Area -->
+        <div id="game-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            
+            <!-- Visualization -->
+            <div class="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden min-h-[440px]">
+                <div id="flash-overlay" class="absolute inset-0 pointer-events-none transition-colors duration-300"></div>
+                
+                <svg viewBox="-120 -120 240 240" class="w-full max-w-[280px] unit-circle-svg">
+                    <!-- Circle Decor -->
+                    <circle cx="0" cy="0" r="100" fill="none" stroke="#f1f5f9" stroke-width="4" />
+                    <circle cx="0" cy="0" r="100" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                    <!-- Axes -->
+                    <line x1="-115" y1="0" x2="115" y2="0" stroke="#cbd5e1" stroke-width="1" />
+                    <line x1="0" y1="-115" x2="0" y2="115" stroke="#cbd5e1" stroke-width="1" />
+                    
+                    <g id="angle-markers"></g>
+                    <line id="active-line" x1="0" y1="0" x2="100" y2="0" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" style="display: none;"/>
+                </svg>
+
+                <div class="mt-8 text-center z-10">
+                    <div id="question-text" class="text-4xl font-black text-slate-800 mb-1">Ready?</div>
+                    <div id="angle-hint" class="text-blue-500 font-bold text-lg h-8"></div>
+                    <div id="coord-display" class="mt-2 text-slate-400 font-mono font-medium text-sm h-5"></div>
+                </div>
+            </div>
+
+            <!-- Input Controls -->
+            <div class="flex flex-col gap-4">
+                <div class="bg-white p-8 rounded-[32px] shadow-xl border border-slate-100 min-h-[350px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <label id="input-label" class="text-xs font-black text-slate-400 uppercase tracking-widest">Enter Ratio</label>
+                        <div id="feedback-msg" class="font-bold text-sm h-5 transition-all"></div>
+                    </div>
+
+                    <!-- Ratio Input View -->
+                    <div id="view-ratio" class="flex flex-col gap-4">
+                        <div class="flex gap-2">
+                            <input type="text" id="answer-input" 
+                                class="flex-1 text-2xl font-mono p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner"
+                                placeholder="?" autocomplete="off">
+                            <button id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 font-black rounded-2xl transition-all shadow-lg shadow-blue-200 active:scale-95">
+                                GO
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button class="input-btn" onclick="addInput('0')">0</button>
+                            <button class="input-btn" onclick="addInput('1')">1</button>
+                            <button class="input-btn" onclick="addInput('-1')">-1</button>
+                            <button class="input-btn" onclick="backspace()">⌫</button>
+                            <button class="input-btn" onclick="addInput('√2/2')">√2/2</button>
+                            <button class="input-btn" onclick="addInput('√3/2')">√3/2</button>
+                            <button class="input-btn" onclick="addInput('1/2')">1/2</button>
+                            <button class="input-btn" onclick="addInput('√3')">√3</button>
+                            <button class="input-btn" onclick="addInput('√3/3')">√3/3</button>
+                            <button class="input-btn" onclick="addInput('2/√3')">2/√3</button>
+                            <button class="input-btn" onclick="addInput('√2')">√2</button>
+                            <button class="input-btn" onclick="addInput('2')">2</button>
+                            <button class="input-btn col-span-2 text-red-500 font-bold" onclick="addInput('-')">Negative (−)</button>
+                            <button class="input-btn col-span-2 font-black" onclick="addInput('undef')">Undef</button>
+                        </div>
+                    </div>
+
+                    <!-- Blitz Input View -->
+                    <div id="view-blitz" class="hidden flex-1 flex flex-col justify-center gap-4">
+                        <p class="text-center text-slate-500 mb-2 font-semibold">Is the result positive or negative?</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="checkBlitz('+')" class="blitz-btn bg-green-500 hover:bg-green-600 text-white shadow-green-100">+</button>
+                            <button onclick="checkBlitz('-')" class="blitz-btn bg-red-500 hover:bg-red-600 text-white shadow-red-100">−</button>
+                        </div>
+                        <button onclick="checkBlitz('0')" class="input-btn w-full mt-2 font-black py-4 border-2">Result is Zero / Undef</button>
+                    </div>
+                </div>
+
+                <button id="start-btn" class="w-full py-6 bg-slate-900 hover:bg-black text-white rounded-[24px] font-black text-2xl transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
+                    START CHALLENGE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white p-10 rounded-[40px] shadow-2xl max-w-sm w-full text-center border border-slate-100">
+            <h2 class="text-3xl font-black text-slate-900">Session Complete</h2>
+            <div id="medal-icon" class="text-7xl my-6">🎯</div>
+            <p class="text-slate-500 font-medium">Points Earned</p>
+            <div id="final-score" class="text-6xl font-black text-blue-600 mb-8">0</div>
+            <button id="restart-btn" class="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-bold text-lg shadow-lg transition-all">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const ANGLES = [
+            { deg: 0, rad: "0", x: "1", y: "0", tan: "0", sec: "1", csc: "undef", cot: "undef" },
+            { deg: 30, rad: "π/6", x: "√3/2", y: "1/2", tan: "√3/3", sec: "2/√3", csc: "2", cot: "√3" },
+            { deg: 45, rad: "π/4", x: "√2/2", y: "√2/2", tan: "1", sec: "√2", csc: "√2", cot: "1" },
+            { deg: 60, rad: "π/3", x: "1/2", y: "√3/2", tan: "√3", sec: "2", csc: "2/√3", cot: "√3/3" },
+            { deg: 90, rad: "π/2", x: "0", y: "1", tan: "undef", sec: "undef", csc: "1", cot: "0" },
+            { deg: 120, rad: "2π/3", x: "-1/2", y: "√3/2", tan: "-√3", sec: "-2", csc: "2/√3", cot: "-√3/3" },
+            { deg: 135, rad: "3π/4", x: "-√2/2", y: "√2/2", tan: "-1", sec: "-√2", csc: "√2", cot: "-1" },
+            { deg: 150, rad: "5π/6", x: "-√3/2", y: "1/2", tan: "-√3/3", sec: "-2/√3", csc: "2", cot: "-√3" },
+            { deg: 180, rad: "π", x: "-1", y: "0", tan: "0", sec: "-1", csc: "undef", cot: "undef" },
+            { deg: 210, rad: "7π/6", x: "-√3/2", y: "-1/2", tan: "√3/3", sec: "-2/√3", csc: "-2", cot: "√3" },
+            { deg: 225, rad: "5π/4", x: "-√2/2", y: "-√2/2", tan: "1", sec: "-√2", csc: "-√2", cot: "1" },
+            { deg: 240, rad: "4π/3", x: "-1/2", y: "-√3/2", tan: "√3", sec: "-2", csc: "-2/√3", cot: "√3/3" },
+            { deg: 270, rad: "3π/2", x: "0", y: "-1", tan: "undef", sec: "undef", csc: "-1", cot: "0" },
+            { deg: 300, rad: "5π/3", x: "1/2", y: "-√3/2", tan: "-√3", sec: "2", csc: "-2/√3", cot: "-√3/3" },
+            { deg: 315, rad: "7π/4", x: "√2/2", y: "-√2/2", tan: "-1", sec: "√2", csc: "-√2", cot: "-1" },
+            { deg: 330, rad: "11π/6", x: "√3/2", y: "-1/2", tan: "-√3/3", sec: "2/√3", csc: "-2", cot: "-√3" }
+        ];
+
+        let score = 0;
+        let timeLeft = 60;
+        let timerId = null;
+        let currentQuestion = null;
+        let isGameActive = false;
+        let gameMode = 'basic'; 
+
+        const timerEl = document.getElementById('timer');
+        const scoreEl = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const angleHint = document.getElementById('angle-hint');
+        const coordDisplay = document.getElementById('coord-display');
+        const answerInput = document.getElementById('answer-input');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const flashOverlay = document.getElementById('flash-overlay');
+        const modal = document.getElementById('modal');
+        const activeLine = document.getElementById('active-line');
+        const angleMarkersGroup = document.getElementById('angle-markers');
+
+        function setMode(mode) {
+            if (isGameActive) return;
+            gameMode = mode;
+            
+            ['basic', 'pro', 'blitz'].forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                btn.className = `mode-btn ${gameMode === m ? 'mode-active' : 'mode-inactive'}`;
+            });
+
+            const ratioView = document.getElementById('view-ratio');
+            const blitzView = document.getElementById('view-blitz');
+            const inputLabel = document.getElementById('input-label');
+
+            if (mode === 'blitz') {
+                ratioView.classList.add('hidden');
+                blitzView.classList.remove('hidden');
+                inputLabel.innerText = 'Quadrant Sign Check';
+            } else {
+                ratioView.classList.remove('hidden');
+                blitzView.classList.add('hidden');
+                inputLabel.innerText = 'Enter Ratio';
+            }
+        }
+
+        function drawMarkers() {
+            ANGLES.forEach(a => {
+                const rad = (a.deg * Math.PI) / 180;
+                const x = Math.cos(rad) * 100;
+                const y = Math.sin(rad) * 100;
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", x);
+                circle.setAttribute("cy", y);
+                circle.setAttribute("r", "2");
+                circle.setAttribute("fill", "#cbd5e1");
+                circle.setAttribute("data-deg", a.deg);
+                circle.classList.add('angle-marker');
+                angleMarkersGroup.appendChild(circle);
+            });
+        }
+
+        function updateCircleUI(deg, showCoords = false) {
+            const rad = (deg * Math.PI) / 180;
+            const x = Math.cos(rad) * 100;
+            const y = Math.sin(rad) * 100;
+            
+            activeLine.setAttribute("x2", x);
+            activeLine.setAttribute("y2", y);
+            activeLine.style.display = 'block';
+
+            document.querySelectorAll('.angle-marker').forEach(m => {
+                m.setAttribute("fill", "#cbd5e1");
+                m.setAttribute("r", "2");
+            });
+
+            const target = document.querySelector(`.angle-marker[data-deg="${deg}"]`);
+            if (target) {
+                target.setAttribute("fill", "#3b82f6");
+                target.setAttribute("r", "4");
+            }
+
+            if (showCoords && gameMode !== 'blitz') {
+                const angle = ANGLES.find(a => a.deg === deg);
+                coordDisplay.innerText = `(${angle.x}, ${angle.y})`;
+            } else {
+                coordDisplay.innerText = '';
+            }
+        }
+
+        function generateQuestion() {
+            const angle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
+            const pool = gameMode === 'basic' ? ["sin", "cos", "tan"] : 
+                         gameMode === 'blitz' ? ["sin", "cos", "tan"] : ["sin", "cos", "tan", "sec", "csc", "cot"];
+            const func = pool[Math.floor(Math.random() * pool.length)];
+            
+            let answer;
+            if (func === "sin") answer = angle.y;
+            else if (func === "cos") answer = angle.x;
+            else answer = angle[func];
+
+            currentQuestion = { angle, func, answer };
+            
+            const useRad = Math.random() > 0.5;
+            questionText.innerHTML = `<span class="text-blue-600">${func}</span>(${useRad ? currentQuestion.angle.rad : currentQuestion.angle.deg + '°'})`;
+            angleHint.innerText = useRad ? `${currentQuestion.angle.deg}°` : currentQuestion.angle.rad;
+            
+            updateCircleUI(angle.deg, false);
+        }
+
+        function handleSuccess() {
+            const points = gameMode === 'pro' ? 15 : (gameMode === 'blitz' ? 5 : 10);
+            score += points;
+            scoreEl.innerText = score;
+            feedbackMsg.innerText = "✓ Correct!";
+            feedbackMsg.className = "font-bold text-sm h-5 text-green-500";
+            
+            flashOverlay.classList.add('correct-flash');
+            setTimeout(() => flashOverlay.classList.remove('correct-flash'), 500);
+            
+            updateCircleUI(currentQuestion.angle.deg, true);
+            
+            setTimeout(() => {
+                answerInput.value = '';
+                generateQuestion();
+                feedbackMsg.innerText = "";
+            }, 600);
+        }
+
+        function handleFail() {
+            feedbackMsg.innerText = "Try Again";
+            feedbackMsg.className = "font-bold text-sm h-5 text-red-400";
+            answerInput.classList.add('ring-2', 'ring-red-200');
+            setTimeout(() => {
+                answerInput.classList.remove('ring-2', 'ring-red-200');
+                feedbackMsg.innerText = "";
+            }, 600);
+        }
+
+        function checkAnswer() {
+            if (!isGameActive || gameMode === 'blitz') return;
+            const userVal = answerInput.value.trim().toLowerCase().replace(/\s/g, '').replace('sqrt', '√');
+            const correctVal = currentQuestion.answer.toLowerCase();
+            const isCorrect = (userVal === correctVal) || (userVal === '1/2' && correctVal === '0.5') || (userVal === '-1/2' && correctVal === '-0.5');
+            if (isCorrect) handleSuccess(); else handleFail();
+        }
+
+        function checkBlitz(sign) {
+            if (!isGameActive || !currentQuestion) return;
+            const ans = currentQuestion.answer;
+            let correctSign;
+            
+            if (ans === '0' || ans === 'undef') correctSign = '0';
+            else if (ans.startsWith('-')) correctSign = '-';
+            else correctSign = '+';
+
+            if (sign === correctSign) handleSuccess(); else handleFail();
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 60;
+            isGameActive = true;
+            scoreEl.innerText = score;
+            timerEl.innerText = timeLeft + "s";
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('setup-panel').classList.add('opacity-30', 'pointer-events-none');
+            answerInput.value = '';
+            if (gameMode !== 'blitz') answerInput.focus();
+            generateQuestion();
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft + "s";
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timerId);
+            isGameActive = false;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('setup-panel').classList.remove('opacity-30', 'pointer-events-none');
+            document.getElementById('start-btn').classList.remove('hidden');
+        }
+
+        function addInput(val) {
+            if (val === '-' && answerInput.value.includes('-')) return;
+            answerInput.value += val;
+            answerInput.focus();
+        }
+
+        function backspace() {
+            answerInput.value = answerInput.value.slice(0, -1);
+            answerInput.focus();
+        }
+
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('submit-btn').addEventListener('click', checkAnswer);
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            document.getElementById('modal').classList.add('hidden');
+            startGame();
+        });
+        answerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
+        drawMarkers();
+    </script>
+</body>
+</html>
