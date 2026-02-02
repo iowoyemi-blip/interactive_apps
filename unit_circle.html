@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Circle Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .unit-circle-svg {
+            transform: rotate(-90deg);
+        }
+
+        .angle-marker {
+            transition: all 0.3s ease;
+        }
+
+        .active-angle {
+            stroke: #ef4444;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+        }
+
+        .input-btn {
+            @apply px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 active:scale-95 transition-all font-medium text-slate-700 shadow-sm;
+        }
+
+        .correct-flash {
+            animation: flashGreen 0.5s ease;
+        }
+
+        @keyframes flashGreen {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(34, 197, 94, 0.2); }
+            100% { background-color: transparent; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <div class="max-w-4xl w-full">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">Unit Circle Challenge</h1>
+                <p class="text-slate-500">Test your recall of trig ratios.</p>
+            </div>
+            
+            <div class="flex gap-4 items-center">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center min-w-[80px]">
+                    <span class="text-xs uppercase font-bold text-slate-400">Time</span>
+                    <span id="timer" class="text-2xl font-mono font-bold text-blue-600">60s</span>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center min-w-[80px]">
+                    <span class="text-xs uppercase font-bold text-slate-400">Score</span>
+                    <span id="score" class="text-2xl font-mono font-bold text-green-600">0</span>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center min-w-[80px]">
+                    <span class="text-xs uppercase font-bold text-slate-400">Best</span>
+                    <span id="high-score" class="text-2xl font-mono font-bold text-slate-700">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <div id="game-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            
+            <!-- Visualization -->
+            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden">
+                <div id="flash-overlay" class="absolute inset-0 pointer-events-none"></div>
+                
+                <svg viewBox="-120 -120 240 240" class="w-full max-w-[320px] unit-circle-svg">
+                    <!-- Circle -->
+                    <circle cx="0" cy="0" r="100" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                    <!-- Axes -->
+                    <line x1="-110" y1="0" x2="110" y2="0" stroke="#cbd5e1" stroke-width="1" />
+                    <line x1="0" y1="-110" x2="0" y2="110" stroke="#cbd5e1" stroke-width="1" />
+                    
+                    <!-- Markers for common angles -->
+                    <g id="angle-markers"></g>
+                    
+                    <!-- Active Indicator -->
+                    <line id="active-line" x1="0" y1="0" x2="100" y2="0" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" style="display: none;"/>
+                </svg>
+
+                <div class="mt-4 text-center">
+                    <div id="question-text" class="text-2xl font-bold text-slate-800 mb-1">Press Start to Begin</div>
+                    <div id="angle-hint" class="text-slate-400 text-sm font-medium h-6"></div>
+                </div>
+            </div>
+
+            <!-- Input Controls -->
+            <div class="flex flex-col gap-4">
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <label class="block text-sm font-bold text-slate-500 uppercase mb-2">Your Answer</label>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="answer-input" 
+                            class="flex-1 text-2xl font-mono p-4 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
+                            placeholder="?" autocomplete="off">
+                        <button id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 font-bold rounded-xl transition-colors shadow-lg shadow-blue-200">
+                            GO
+                        </button>
+                    </div>
+
+                    <!-- Specialized Keypad -->
+                    <div class="grid grid-cols-4 gap-2 mb-4">
+                        <button class="input-btn" onclick="addInput('0')">0</button>
+                        <button class="input-btn" onclick="addInput('1')">1</button>
+                        <button class="input-btn" onclick="addInput('-1')">-1</button>
+                        <button class="input-btn" onclick="backspace()">⌫</button>
+                        
+                        <button class="input-btn" onclick="addInput('√2/2')">√2/2</button>
+                        <button class="input-btn" onclick="addInput('√3/2')">√3/2</button>
+                        <button class="input-btn" onclick="addInput('1/2')">1/2</button>
+                        <button class="input-btn" onclick="addInput('√3')">√3</button>
+
+                        <button class="input-btn" onclick="addInput('√3/3')">√3/3</button>
+                        <button class="input-btn" onclick="addInput('-√2/2')">-√2/2</button>
+                        <button class="input-btn" onclick="addInput('-√3/2')">-√3/2</button>
+                        <button class="input-btn" onclick="addInput('undef')">Undef</button>
+                    </div>
+
+                    <div id="feedback-msg" class="text-center font-bold text-lg h-8 transition-all"></div>
+                </div>
+
+                <button id="start-btn" class="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-bold text-xl transition-all shadow-xl">
+                    START GAME
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-8 bg-blue-50 p-6 rounded-2xl border border-blue-100">
+            <h3 class="font-bold text-blue-900 mb-2">How to play</h3>
+            <ul class="text-blue-800 text-sm space-y-1 list-disc list-inside">
+                <li>Identify the trig ratio for the given angle and function.</li>
+                <li>Use the keypad or your keyboard to enter values like <code class="bg-blue-100 px-1 rounded">√3/2</code> or <code class="bg-blue-100 px-1 rounded">1/2</code>.</li>
+                <li>Negative signs must come first: <code class="bg-blue-100 px-1 rounded">-√2/2</code>.</li>
+                <li>For undefined results (like tan 90°), type "undef".</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <h2 class="text-4xl font-black text-slate-900 mb-2">Time's Up!</h2>
+            <div class="text-6xl my-6">🏆</div>
+            <p class="text-slate-500 mb-1">Your Final Score</p>
+            <div id="final-score" class="text-5xl font-black text-blue-600 mb-8">0</div>
+            <button id="restart-btn" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow-lg">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Constants & Data
+        const ANGLES = [
+            { deg: 0, rad: "0", x: "1", y: "0", tan: "0" },
+            { deg: 30, rad: "π/6", x: "√3/2", y: "1/2", tan: "√3/3" },
+            { deg: 45, rad: "π/4", x: "√2/2", y: "√2/2", tan: "1" },
+            { deg: 60, rad: "π/3", x: "1/2", y: "√3/2", tan: "√3" },
+            { deg: 90, rad: "π/2", x: "0", y: "1", tan: "undef" },
+            { deg: 120, rad: "2π/3", x: "-1/2", y: "√3/2", tan: "-√3" },
+            { deg: 135, rad: "3π/4", x: "-√2/2", y: "√2/2", tan: "-1" },
+            { deg: 150, rad: "5π/6", x: "-√3/2", y: "1/2", tan: "-√3/3" },
+            { deg: 180, rad: "π", x: "-1", y: "0", tan: "0" },
+            { deg: 210, rad: "7π/6", x: "-√3/2", y: "-1/2", tan: "√3/3" },
+            { deg: 225, rad: "5π/4", x: "-√2/2", y: "-√2/2", tan: "1" },
+            { deg: 240, rad: "4π/3", x: "-1/2", y: "-√3/2", tan: "√3" },
+            { deg: 270, rad: "3π/2", x: "0", y: "-1", tan: "undef" },
+            { deg: 300, rad: "5π/3", x: "1/2", y: "-√3/2", tan: "-√3" },
+            { deg: 315, rad: "7π/4", x: "√2/2", y: "-√2/2", tan: "-1" },
+            { deg: 330, rad: "11π/6", x: "√3/2", y: "-1/2", tan: "-√3/3" }
+        ];
+
+        const FUNCTIONS = ["sin", "cos", "tan"];
+
+        // State
+        let score = 0;
+        let highScore = localStorage.getItem('unitCircleHighScore') || 0;
+        let timeLeft = 60;
+        let timerId = null;
+        let currentQuestion = null;
+        let isGameActive = false;
+
+        // Elements
+        const timerEl = document.getElementById('timer');
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('high-score');
+        const questionText = document.getElementById('question-text');
+        const angleHint = document.getElementById('angle-hint');
+        const answerInput = document.getElementById('answer-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const startBtn = document.getElementById('start-btn');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const flashOverlay = document.getElementById('flash-overlay');
+        const modal = document.getElementById('modal');
+        const finalScoreEl = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const activeLine = document.getElementById('active-line');
+        const angleMarkersGroup = document.getElementById('angle-markers');
+
+        // Init
+        highScoreEl.innerText = highScore;
+        drawMarkers();
+
+        function drawMarkers() {
+            ANGLES.forEach(a => {
+                const rad = (a.deg * Math.PI) / 180;
+                const x = Math.cos(rad) * 100;
+                const y = Math.sin(rad) * 100;
+                
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", x);
+                circle.setAttribute("cy", y);
+                circle.setAttribute("r", "2");
+                circle.setAttribute("fill", "#94a3b8");
+                circle.setAttribute("data-deg", a.deg);
+                circle.classList.add('angle-marker');
+                angleMarkersGroup.appendChild(circle);
+            });
+        }
+
+        function updateCircleUI(deg) {
+            const rad = (deg * Math.PI) / 180;
+            const x = Math.cos(rad) * 100;
+            const y = Math.sin(rad) * 100;
+            
+            activeLine.setAttribute("x2", x);
+            activeLine.setAttribute("y2", y);
+            activeLine.style.display = 'block';
+
+            // Reset all markers
+            document.querySelectorAll('.angle-marker').forEach(m => {
+                m.setAttribute("r", "2");
+                m.setAttribute("fill", "#94a3b8");
+                m.classList.remove('active-angle');
+            });
+
+            // Highlight target
+            const target = document.querySelector(`.angle-marker[data-deg="${deg}"]`);
+            if (target) {
+                target.setAttribute("r", "5");
+                target.setAttribute("fill", "#3b82f6");
+            }
+        }
+
+        // Gameplay
+        function startGame() {
+            score = 0;
+            timeLeft = 60;
+            isGameActive = true;
+            scoreEl.innerText = score;
+            timerEl.innerText = timeLeft + "s";
+            startBtn.classList.add('hidden');
+            answerInput.value = '';
+            answerInput.focus();
+            
+            generateQuestion();
+            
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft + "s";
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timerId);
+            isGameActive = false;
+            finalScoreEl.innerText = score;
+            modal.classList.remove('hidden');
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('unitCircleHighScore', highScore);
+                highScoreEl.innerText = highScore;
+            }
+        }
+
+        function generateQuestion() {
+            const angle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
+            const func = FUNCTIONS[Math.floor(Math.random() * FUNCTIONS.length)];
+            
+            let answer = "";
+            if (func === "sin") answer = angle.y;
+            else if (func === "cos") answer = angle.x;
+            else answer = angle.tan;
+
+            currentQuestion = { angle, func, answer };
+            
+            // Randomly show deg or rad
+            const useRad = Math.random() > 0.5;
+            questionText.innerHTML = `<span class="text-blue-600">${func}</span>(${useRad ? currentQuestion.angle.rad : currentQuestion.angle.deg + '°'})`;
+            angleHint.innerText = useRad ? `${currentQuestion.angle.deg}°` : currentQuestion.angle.rad;
+            
+            updateCircleUI(angle.deg);
+        }
+
+        function checkAnswer() {
+            if (!isGameActive) return;
+
+            const userVal = answerInput.value.trim().toLowerCase();
+            const correctVal = currentQuestion.answer.toLowerCase();
+
+            // Allow variations
+            const isCorrect = (userVal === correctVal) || 
+                              (userVal === 'sqrt(3)/2' && correctVal === '√3/2') ||
+                              (userVal === 'sqrt(2)/2' && correctVal === '√2/2') ||
+                              (userVal === '1/2' && correctVal === '0.5') ||
+                              (userVal === 'undefined' && correctVal === 'undef');
+
+            if (isCorrect) {
+                score += 10;
+                scoreEl.innerText = score;
+                feedbackMsg.innerText = "Correct! +10";
+                feedbackMsg.className = "text-center font-bold text-lg h-8 text-green-500";
+                
+                flashOverlay.classList.add('correct-flash');
+                setTimeout(() => flashOverlay.classList.remove('correct-flash'), 500);
+                
+                answerInput.value = '';
+                generateQuestion();
+            } else {
+                feedbackMsg.innerText = "Keep trying...";
+                feedbackMsg.className = "text-center font-bold text-lg h-8 text-red-400";
+                answerInput.classList.add('border-red-300');
+                setTimeout(() => answerInput.classList.remove('border-red-300'), 500);
+            }
+        }
+
+        // Input Helpers
+        function addInput(val) {
+            answerInput.value += val;
+            answerInput.focus();
+        }
+
+        function backspace() {
+            answerInput.value = answerInput.value.slice(0, -1);
+            answerInput.focus();
+        }
+
+        // Listeners
+        startBtn.addEventListener('click', startGame);
+        submitBtn.addEventListener('click', checkAnswer);
+        restartBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            startGame();
+        });
+
+        answerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        // Key support for square root
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'r') { // Map 'r' to square root symbol for convenience
+                e.preventDefault();
+                addInput('√');
+            }
+        });
+
+    </script>
+</body>
+</html>
