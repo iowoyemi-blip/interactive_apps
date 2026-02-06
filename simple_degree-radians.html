@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Degrees ↔ Radians Trainer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      color: #020617;
+      background-color: #e2e8f0;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #e2e8f0;
+      padding: 1rem;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 640px;
+      background: #ffffff;
+      border-radius: 1.25rem;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .app-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .app-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .app-sub {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .mode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .mode-btn {
+      border-radius: 999px;
+      border: 1px solid #cbd5f5;
+      background: #ffffff;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      color: #334155;
+      transition: background 120ms ease, color 120ms ease,
+        border-color 120ms ease;
+    }
+
+    .mode-btn:hover {
+      background: #f8fafc;
+    }
+
+    .mode-btn.active {
+      background: #020617;
+      color: #ffffff;
+      border-color: #020617;
+    }
+
+    .card {
+      border-radius: 1.25rem;
+      border: 1px solid #e2e8f0;
+      background: rgba(248, 250, 252, 0.7);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #64748b;
+    }
+
+    .question-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .field-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #334155;
+      margin-bottom: 0.25rem;
+    }
+
+    .field-hint {
+      margin-left: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+
+    .text-input {
+      width: 100%;
+      border-radius: 0.75rem;
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .text-input:focus {
+      border-color: #020617;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.35);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .btn-primary {
+      border-radius: 0.75rem;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #ffffff;
+      background: #020617;
+      transition: background 120ms ease, transform 80ms ease;
+    }
+
+    .btn-primary:hover {
+      background: #020617ee;
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      border-radius: 0.75rem;
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: #334155;
+      background: #ffffff;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    .feedback {
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .feedback.correct {
+      border-color: #6ee7b7;
+      background: #ecfdf5;
+      color: #065f46;
+    }
+
+    .feedback.incorrect {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+
+    .stats-row span {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .footer {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed #e2e8f0;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-title">Degrees ↔ Radians Trainer</div>
+      <div class="app-sub">
+        Focus: 0°, 30°, 45°, 60°, 90° and their multiples
+      </div>
+    </header>
+
+    <!-- Mode selector -->
+    <div class="mode-row">
+      <button class="mode-btn active" data-mode="degToRad">
+        Degrees → Radians
+      </button>
+      <button class="mode-btn" data-mode="radToDeg">
+        Radians → Degrees
+      </button>
+      <button class="mode-btn" data-mode="mixed">
+        Mixed
+      </button>
+    </div>
+
+    <!-- Question card -->
+    <div class="card">
+      <div class="card-label">Question</div>
+      <div id="question-text" class="question-text">
+        <!-- filled by JS -->
+      </div>
+
+      <div>
+        <div class="field-label">
+          Your answer
+          <span id="field-hint" class="field-hint"></span>
+        </div>
+        <input
+          id="answer-input"
+          class="text-input"
+          type="text"
+          placeholder="e.g. pi/6"
+        />
+      </div>
+
+      <div class="btn-row">
+        <button id="check-btn" class="btn-primary">Check answer</button>
+        <button id="next-btn" class="btn-secondary">Next question</button>
+      </div>
+    </div>
+
+    <!-- Feedback and stats -->
+    <div id="feedback" class="feedback" style="display: none;"></div>
+
+    <div class="stats-row">
+      <div>
+        Questions answered: <span id="total-count">0</span>
+      </div>
+      <div>
+        Correct: <span id="correct-count">0</span> · Accuracy:
+        <span id="accuracy">–</span>%
+      </div>
+    </div>
+
+    <footer class="footer">
+      Tip: Remember that 180° = π radians, so multiply by π/180 to go from
+      degrees → radians and by 180/π to go from radians → degrees.
+    </footer>
+  </div>
+
+  <script>
+    // ---- Math helper functions ----
+
+    function gcd(a, b) {
+      a = Math.abs(a);
+      b = Math.abs(b);
+      while (b) {
+        const t = b;
+        b = a % b;
+        a = t;
+      }
+      return a || 1;
+    }
+
+    function degreesToRationalPi(deg) {
+      if (deg === 0) return { num: 0, den: 1 };
+      const num = deg;
+      const den = 180;
+      const g = gcd(num, den);
+      return { num: num / g, den: den / g };
+    }
+
+    function rationalPiToString(f) {
+      const num = f.num;
+      const den = f.den;
+      if (num === 0) return "0";
+      const sign = num < 0 ? "-" : "";
+      const absNum = Math.abs(num);
+
+      if (den === 1) {
+        if (absNum === 1) return sign + "π";
+        return sign + absNum + "π";
+      }
+
+      if (absNum === 1) return sign + "π/" + den;
+      return sign + absNum + "π/" + den;
+    }
+
+    // Parse user input: returns { type: "rad", value: {num, den} } or { type: "deg", value: number } or null
+    function parseUserInput(input) {
+      if (!input) return null;
+      let s = input.trim().toLowerCase();
+      if (!s) return null;
+
+      // normalize pi symbol
+      s = s.replace(/π/g, "pi");
+      s = s.replace(/\s+/g, "");
+
+      // If no "pi", treat as degree number
+      if (!s.includes("pi")) {
+        const num = Number(s);
+        if (!Number.isNaN(num)) {
+          return { type: "deg", value: num };
+        }
+        return null;
+      }
+
+      // handle forms like "pi", "-pi", "2pi", "-3pi/4", "pi/6"
+      const radRegex = /^(-)?(?:(\d+)?pi)(?:\/(\d+))?$/;
+      const match = s.match(radRegex);
+      if (!match) return null;
+
+      const sign = match[1] ? -1 : 1;
+      const numPart = match[2] ? parseInt(match[2], 10) : 1;
+      const denPart = match[3] ? parseInt(match[3], 10) : 1;
+
+      let num = sign * numPart;
+      let den = denPart;
+      const g = gcd(num, den);
+      num = num / g;
+      den = den / g;
+
+      return {
+        type: "rad",
+        value: { num: num, den: den },
+      };
+    }
+
+    function equalRationals(a, b) {
+      return a.num * b.den === b.num * a.den;
+    }
+
+    // ---- Build angles set: multiples of 0, 30, 45, 60, 90 up to 360 ----
+    function buildAngleSet() {
+      const baseAngles = [0, 30, 45, 60, 90];
+      const set = new Set();
+      baseAngles.forEach((base) => {
+        if (base === 0) {
+          set.add(0);
+          return;
+        }
+        for (let k = 0; k <= 12; k++) {
+          const val = base * k;
+          if (val >= 0 && val <= 360) set.add(val);
+        }
+      });
+      const arr = Array.from(set);
+      arr.sort((a, b) => a - b);
+      return arr;
+    }
+
+    const ANGLES_DEG = buildAngleSet();
+
+    function generateQuestion(mode) {
+      const deg = ANGLES_DEG[Math.floor(Math.random() * ANGLES_DEG.length)];
+      const rational = degreesToRationalPi(deg);
+
+      if (mode === "degToRad") {
+        return {
+          kind: "degToRad",
+          questionText: deg + "° = ? (in radians)",
+          degreeValue: deg,
+          radianValue: rational,
+        };
+      }
+
+      if (mode === "radToDeg") {
+        return {
+          kind: "radToDeg",
+          questionText: rationalPiToString(rational) + " = ?°",
+          degreeValue: deg,
+          radianValue: rational,
+        };
+      }
+
+      // mixed: flip a coin
+      const kind = Math.random() < 0.5 ? "degToRad" : "radToDeg";
+      return generateQuestion(kind);
+    }
+
+    // ---- App state ----
+    let currentMode = "degToRad";
+    let currentQuestion = generateQuestion(currentMode);
+    let isCorrect = null;
+    let total = 0;
+    let correctCount = 0;
+
+    // ---- DOM elements ----
+    const questionTextEl = document.getElementById("question-text");
+    const fieldHintEl = document.getElementById("field-hint");
+    const answerInputEl = document.getElementById("answer-input");
+    const feedbackEl = document.getElementById("feedback");
+    const totalCountEl = document.getElementById("total-count");
+    const correctCountEl = document.getElementById("correct-count");
+    const accuracyEl = document.getElementById("accuracy");
+    const modeButtons = document.querySelectorAll(".mode-btn");
+    const checkBtn = document.getElementById("check-btn");
+    const nextBtn = document.getElementById("next-btn");
+
+    function updateUIForQuestion() {
+      questionTextEl.textContent = currentQuestion.questionText;
+      if (currentQuestion.kind === "degToRad") {
+        fieldHintEl.textContent = "(use pi, e.g. pi/6 or 3pi/4)";
+        answerInputEl.placeholder = "e.g. pi/6";
+      } else {
+        fieldHintEl.textContent = "(enter an integer degree, e.g. 30)";
+        answerInputEl.placeholder = "e.g. 30";
+      }
+      answerInputEl.value = "";
+      feedbackEl.style.display = "none";
+      feedbackEl.textContent = "";
+      feedbackEl.classList.remove("correct", "incorrect");
+      isCorrect = null;
+    }
+
+    function updateStats() {
+      totalCountEl.textContent = String(total);
+      correctCountEl.textContent = String(correctCount);
+      if (total === 0) {
+        accuracyEl.textContent = "–";
+      } else {
+        const acc = Math.round((100 * correctCount) / total);
+        accuracyEl.textContent = String(acc);
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      modeButtons.forEach((btn) => {
+        if (btn.getAttribute("data-mode") === mode) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      currentQuestion = generateQuestion(currentMode === "mixed" ? (Math.random() < 0.5 ? "degToRad" : "radToDeg") : currentMode);
+      updateUIForQuestion();
+    }
+
+    function handleCheck() {
+      const raw = answerInputEl.value;
+      if (!raw.trim()) return;
+
+      const parsed = parseUserInput(raw);
+      const q = currentQuestion;
+
+      if (!parsed) {
+        isCorrect = false;
+        const correctAns =
+          q.kind === "degToRad"
+            ? rationalPiToString(q.radianValue)
+            : String(q.degreeValue);
+
+        feedbackEl.textContent =
+          'I couldn\'t understand your answer. For this problem, a valid format would be "' +
+          (q.kind === "degToRad" ? "pi/6, π/6, 3pi/4" : "45, 90, 180") +
+          '". Correct answer: ' +
+          correctAns +
+          ".";
+        feedbackEl.classList.remove("correct");
+        feedbackEl.classList.add("incorrect");
+        feedbackEl.style.display = "block";
+        total += 1;
+        updateStats();
+        return;
+      }
+
+      let correct = false;
+
+      if (q.kind === "degToRad" && parsed.type === "rad") {
+        correct = equalRationals(parsed.value, q.radianValue);
+      } else if (q.kind === "radToDeg" && parsed.type === "deg") {
+        correct = Math.round(parsed.value) === q.degreeValue;
+      }
+
+      const correctAnswerText =
+        q.kind === "degToRad"
+          ? rationalPiToString(q.radianValue)
+          : String(q.degreeValue);
+
+      if (correct) {
+        isCorrect = true;
+        feedbackEl.textContent =
+          q.kind === "degToRad"
+            ? q.degreeValue +
+              "° = " +
+              correctAnswerText +
+              ". Nice! You used the fact that 180° = π radians."
+            : rationalPiToString(q.radianValue) +
+              " = " +
+              correctAnswerText +
+              "°. Great job! You used the fact that π radians = 180°.";
+        feedbackEl.classList.remove("incorrect");
+        feedbackEl.classList.add("correct");
+        feedbackEl.style.display = "block";
+        correctCount += 1;
+      } else {
+        isCorrect = false;
+        if (q.kind === "degToRad") {
+          feedbackEl.textContent =
+            "Not quite. 180° = π radians, so we multiply by π/180: (" +
+            q.degreeValue +
+            "·π)/180 = " +
+            correctAnswerText +
+            ".";
+        } else {
+          feedbackEl.textContent =
+            "Not quite. Since π radians = 180°, we can set up a proportion or convert: (" +
+            q.radianValue.num +
+            "·180)/" +
+            q.radianValue.den +
+            " = " +
+            correctAnswerText +
+            "°.";
+        }
+        feedbackEl.classList.remove("correct");
+        feedbackEl.classList.add("incorrect");
+        feedbackEl.style.display = "block";
+      }
+
+      total += 1;
+      updateStats();
+    }
+
+    function handleNext() {
+      if (currentMode === "mixed") {
+        const kind = Math.random() < 0.5 ? "degToRad" : "radToDeg";
+        currentQuestion = generateQuestion(kind);
+      } else {
+        currentQuestion = generateQuestion(currentMode);
+      }
+      updateUIForQuestion();
+      answerInputEl.focus();
+    }
+
+    // ---- Wire up events ----
+    modeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = btn.getAttribute("data-mode");
+        if (mode) setMode(mode);
+      });
+    });
+
+    checkBtn.addEventListener("click", handleCheck);
+    nextBtn.addEventListener("click", handleNext);
+
+    answerInputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleCheck();
+      }
+    });
+
+    // ---- Initial render ----
+    updateUIForQuestion();
+    updateStats();
+    answerInputEl.focus();
+  </script>
+</body>
+</html>
